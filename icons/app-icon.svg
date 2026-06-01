@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Web Antenna icon">
+  <rect width="512" height="512" rx="96" fill="#e94560"/>
+  <g fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M156 392 256 128 356 392" stroke-width="44"/>
+    <path d="M205 274h102" stroke-width="38"/>
+    <path d="M256 74v96" stroke-width="30"/>
+    <path d="M206 91c-28 18-46 49-46 84" stroke-width="22" opacity=".95"/>
+    <path d="M306 91c28 18 46 49 46 84" stroke-width="22" opacity=".95"/>
+    <path d="M162 52c-44 31-72 82-72 139" stroke-width="18" opacity=".78"/>
+    <path d="M350 52c44 31 72 82 72 139" stroke-width="18" opacity=".78"/>
+  </g>
+</svg>
