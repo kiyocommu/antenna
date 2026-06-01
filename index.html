@@ -292,10 +292,15 @@ body.light .tile-pin-btn:hover { color: #c09010; }
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid #1a3a6e;
+  border-radius: 6px;
+  background: rgba(15, 52, 96, 0.38);
 }
 .settings-row-label {
   color: #c8d6e5;
-  font-size: 12px;
+  font-size: 13px;
+  font-weight: 600;
 }
 #custom-proxy-input {
   width: 100%;
@@ -333,19 +338,38 @@ body.light .tile-pin-btn:hover { color: #c09010; }
   text-align: right;
 }
 #settings-save-btn,
-#cloud-sync-now-btn,
-#settings-theme-toggle-btn {
+#cloud-sync-now-btn {
   background: #e94560; border: none; border-radius: 4px; color: white;
   font-size: 13px; padding: 6px 18px; cursor: pointer;
 }
+#settings-theme-toggle-btn {
+  background: transparent;
+  border: 1px solid #2b4f76;
+  border-radius: 999px;
+  color: #b0bdd0;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 7px 12px;
+  white-space: nowrap;
+}
 #settings-save-btn:hover,
-#cloud-sync-now-btn:hover,
-#settings-theme-toggle-btn:hover { background: #c73550; }
+#cloud-sync-now-btn:hover { background: #c73550; }
+#settings-theme-toggle-btn:hover {
+  background: #17284a;
+  border-color: #e94560;
+  color: #fff;
+}
 body.light #settings-modal { background: #EEF1F8; border-color: #C5CCE0; }
 body.light #settings-modal-header { color: #1a1a2e; border-color: #C5CCE0; }
 body.light #settings-modal-footer { border-color: #C5CCE0; }
 body.light .settings-section { border-color: #C5CCE0; }
 body.light .settings-row-label { color: #1a1a2e; }
+body.light .settings-inline-row {
+  background: var(--antenna-panel-soft);
+  border-color: var(--antenna-border);
+}
 body.light #custom-proxy-input,
 body.light .cloud-input { background: #D4DBEC; border-color: #C5CCE0; color: #1a1a2e; }
 body.light #custom-proxy-input::placeholder,
@@ -812,6 +836,31 @@ body.light .diff-omit { color: #a0a8c0; }
   display: flex;
   align-items: center;
 }
+#status {
+  position: fixed;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #0f3460;
+  border: 1px solid #1a4a8a;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 13px;
+  color: #e0e0e0;
+  display: none;
+  z-index: 300;
+  max-width: 80vw;
+  line-height: 1.5;
+  text-align: center;
+}
+#status.success {
+  border-color: #4aaa70;
+  color: #6ee89e;
+}
+#status.error {
+  border-color: #e94560;
+  color: #ff7a8a;
+}
 
 /* ---- Shortcuts ---- */
 #shortcuts {
@@ -1231,6 +1280,9 @@ body.light #header,
 body.light #site-list-header,
 body.light #detail-header,
 body.light #statusbar { background: #E2E7F2; border-color: #C5CCE0; }
+body.light #status { background: #E2E7F2; border-color: #C5CCE0; color: #1a1a2e; }
+body.light #status.success { border-color: #82b59c; color: #2f7a54; }
+body.light #status.error { border-color: #e94560; color: #c0392b; }
 body.light #check-loader { background: rgba(238,241,248,0.97); border-color: #B8C2D8; box-shadow: 0 8px 32px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.6); }
 body.light #check-loader-header { color: #6a7090; }
 body.light .check-dot { background: #C5CCE0; }
@@ -1341,6 +1393,19 @@ body.light #shortcuts {
   border-color: var(--antenna-border);
   color: var(--antenna-muted);
 }
+body.light #status {
+  background: var(--antenna-panel-soft);
+  border-color: var(--antenna-border);
+  color: var(--antenna-text);
+}
+body.light #status.success {
+  border-color: #82b59c;
+  color: #2f7a54;
+}
+body.light #status.error {
+  border-color: var(--antenna-accent);
+  color: var(--antenna-accent);
+}
 body.light #shortcuts {
   border-top-color: var(--antenna-border);
 }
@@ -1447,7 +1512,11 @@ body.light #tile-overlay-pin-btn,
 body.light #image-lightbox-prev,
 body.light #image-lightbox-next,
 body.light #settings-save-btn,
-body.light #cloud-sync-now-btn,
+body.light #cloud-sync-now-btn {
+  background: transparent;
+  border-color: var(--antenna-border);
+  color: var(--antenna-muted);
+}
 body.light #settings-theme-toggle-btn {
   background: transparent;
   border-color: var(--antenna-border);
@@ -1474,11 +1543,15 @@ body.light #tile-overlay-pin-btn:hover,
 body.light #image-lightbox-prev:hover,
 body.light #image-lightbox-next:hover,
 body.light #settings-save-btn:hover,
-body.light #cloud-sync-now-btn:hover,
-body.light #settings-theme-toggle-btn:hover {
+body.light #cloud-sync-now-btn:hover {
   background: var(--antenna-panel-soft);
   border-color: var(--antenna-accent);
   color: var(--antenna-text);
+}
+body.light #settings-theme-toggle-btn:hover {
+  background: var(--antenna-accent-soft);
+  border-color: var(--antenna-accent);
+  color: var(--antenna-accent);
 }
 body.light #tile-overlay-check-btn:hover,
 body.light #tile-overlay-pin-btn:hover {
@@ -2041,6 +2114,7 @@ body:not(.light) #logo:hover::after {
 </div>
 
 <div id="statusbar"></div>
+<div id="status"></div>
 
 <div id="settings-overlay" style="display:none">
   <div id="settings-modal">
@@ -2147,9 +2221,10 @@ function updateThemeControls() {
   const settingsBtn = document.getElementById('settings-theme-toggle-btn');
   if (themeBtn) themeBtn.style.background = currentTheme === 'dark' ? '#EEF1F8' : '#1a1a2e';
   if (settingsBtn) {
-    const nextLabel = currentTheme === 'dark' ? 'ライト' : 'ダーク';
+    const label = currentTheme === 'light' ? 'ライト' : 'ダーク';
+    const nextLabel = currentTheme === 'light' ? 'ダーク' : 'ライト';
     const help = `${nextLabel}モードに切り替え`;
-    settingsBtn.textContent = nextLabel;
+    settingsBtn.textContent = label;
     settingsBtn.setAttribute('aria-label', help);
     settingsBtn.dataset.tooltip = help;
   }
@@ -2868,7 +2943,7 @@ function queueCloudSync(reason = 'change') {
     pushCloudState(reason).catch(err => {
       console.error('[Web Antenna Cloud] sync failed', err);
       updateCloudStatus();
-      setStatus(`同期失敗: ${err.message}`);
+      showStatus(`同期失敗: ${err.message}`, 9000, 'error');
     });
   }, 700);
 }
@@ -2880,7 +2955,7 @@ async function pushCloudState(reason = 'change') {
     const rows = sites.filter(site => site.url).map(serializeSiteForCloud);
     await syncCloudTable('antenna_sites', rows, 'url', ['profile_id', 'url']);
     updateCloudStatus('online');
-    if (reason === 'manual') setStatus(`同期しました（${rows.length}件）`);
+    if (reason === 'manual') showStatus(`同期しました（サイト${rows.length}件）`, 5000, 'success');
     return { sites: rows.length };
   };
   cloudSyncPromise = cloudSyncPromise.then(runSync, runSync);
@@ -2902,12 +2977,12 @@ async function loadCloudState() {
     showDetail();
     updateCloudStatus('online');
     await pushCloudState('merge');
-    setStatus(`同期データを取得しました（${sites.length}件）`);
+    showStatus(`同期データを取得しました（サイト${sites.length}件）`, 5000, 'success');
     return true;
   } catch (err) {
     console.error('[Web Antenna Cloud] load failed', err);
     updateCloudStatus();
-    setStatus(`同期データの取得に失敗: ${err.message}`);
+    showStatus(`同期データの取得に失敗: ${err.message}`, 9000, 'error');
     return false;
   }
 }
@@ -2917,6 +2992,18 @@ async function loadCloudState() {
 // ============================================================
 function setStatus(msg) {
   document.getElementById('statusbar').textContent = msg;
+}
+
+function showStatus(msg, duration = 5000, type = '') {
+  const el = document.getElementById('status');
+  el.textContent = msg;
+  el.className = type;
+  el.style.display = 'block';
+  clearTimeout(el._timer);
+  el._timer = setTimeout(() => {
+    el.style.display = 'none';
+    el.className = '';
+  }, duration);
 }
 
 // ---- Check loader animation ----
@@ -4223,7 +4310,7 @@ document.getElementById('cloud-sync-now-btn').addEventListener('click', async ()
     profileId: document.getElementById('cloud-profile-id-input').value,
   });
   if (!hasCloudConfig()) {
-    setStatus('Cloud設定を入力してください');
+    showStatus('Cloud設定を入力してください', 5000, 'error');
     return;
   }
   const btn = document.getElementById('cloud-sync-now-btn');
@@ -4232,6 +4319,8 @@ document.getElementById('cloud-sync-now-btn').addEventListener('click', async ()
   try {
     await loadCloudState();
     await pushCloudState('manual');
+  } catch (err) {
+    showStatus(`同期失敗: ${err.message}`, 9000, 'error');
   } finally {
     btn.disabled = false;
     btn.textContent = '同期';
