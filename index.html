@@ -280,6 +280,16 @@ body.light .tile-pin-btn:hover { color: #c09010; }
   margin-bottom: 10px;
 }
 .settings-row { margin-top: 10px; }
+.settings-inline-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.settings-row-label {
+  color: #c8d6e5;
+  font-size: 12px;
+}
 #custom-proxy-input {
   width: 100%;
   background: #0f3460;
@@ -316,16 +326,19 @@ body.light .tile-pin-btn:hover { color: #c09010; }
   text-align: right;
 }
 #settings-save-btn,
-#cloud-sync-now-btn {
+#cloud-sync-now-btn,
+#settings-theme-toggle-btn {
   background: #e94560; border: none; border-radius: 4px; color: white;
   font-size: 13px; padding: 6px 18px; cursor: pointer;
 }
 #settings-save-btn:hover,
-#cloud-sync-now-btn:hover { background: #c73550; }
+#cloud-sync-now-btn:hover,
+#settings-theme-toggle-btn:hover { background: #c73550; }
 body.light #settings-modal { background: #EEF1F8; border-color: #C5CCE0; }
 body.light #settings-modal-header { color: #1a1a2e; border-color: #C5CCE0; }
 body.light #settings-modal-footer { border-color: #C5CCE0; }
 body.light .settings-section { border-color: #C5CCE0; }
+body.light .settings-row-label { color: #1a1a2e; }
 body.light #custom-proxy-input,
 body.light .cloud-input { background: #D4DBEC; border-color: #C5CCE0; color: #1a1a2e; }
 body.light #custom-proxy-input::placeholder,
@@ -1427,7 +1440,8 @@ body.light #tile-overlay-pin-btn,
 body.light #image-lightbox-prev,
 body.light #image-lightbox-next,
 body.light #settings-save-btn,
-body.light #cloud-sync-now-btn {
+body.light #cloud-sync-now-btn,
+body.light #settings-theme-toggle-btn {
   background: transparent;
   border-color: var(--antenna-border);
   color: var(--antenna-muted);
@@ -1453,7 +1467,8 @@ body.light #tile-overlay-pin-btn:hover,
 body.light #image-lightbox-prev:hover,
 body.light #image-lightbox-next:hover,
 body.light #settings-save-btn:hover,
-body.light #cloud-sync-now-btn:hover {
+body.light #cloud-sync-now-btn:hover,
+body.light #settings-theme-toggle-btn:hover {
   background: var(--antenna-panel-soft);
   border-color: var(--antenna-accent);
   color: var(--antenna-text);
@@ -1993,6 +2008,13 @@ body:not(.light) #logo:hover::after {
     </div>
     <div id="settings-modal-body">
       <div class="settings-section">
+        <div class="settings-section-title">表示設定</div>
+        <div class="settings-row settings-inline-row">
+          <span class="settings-row-label">表示テーマ</span>
+          <button id="settings-theme-toggle-btn" type="button" data-tooltip="テーマを切り替え" aria-label="ライト / ダークモード切替">ライト</button>
+        </div>
+      </div>
+      <div class="settings-section">
         <div class="settings-section-title">取得設定</div>
         <label for="custom-proxy-input">カスタムCORSプロキシ URL（省略可）</label>
         <input type="url" id="custom-proxy-input" placeholder="例: http://localhost:8080/" />
@@ -2043,14 +2065,29 @@ const DEFAULT_CLOUD_PROFILE_ID = 'private-antenna';
 // Theme
 // ============================================================
 let currentTheme = localStorage.getItem('antenna-theme') || 'dark';
-document.getElementById('theme-btn').style.background = currentTheme === 'dark' ? '#EEF1F8' : '#1a1a2e';
 
-document.getElementById('theme-btn').addEventListener('click', () => {
+function updateThemeControls() {
+  const themeBtn = document.getElementById('theme-btn');
+  const settingsBtn = document.getElementById('settings-theme-toggle-btn');
+  if (themeBtn) themeBtn.style.background = currentTheme === 'dark' ? '#EEF1F8' : '#1a1a2e';
+  if (settingsBtn) {
+    const nextLabel = currentTheme === 'dark' ? 'ライト' : 'ダーク';
+    const help = `${nextLabel}モードに切り替え`;
+    settingsBtn.textContent = nextLabel;
+    settingsBtn.setAttribute('aria-label', help);
+    settingsBtn.dataset.tooltip = help;
+  }
+}
+
+function toggleTheme() {
   currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
   document.body.classList.toggle('light', currentTheme === 'light');
-  document.getElementById('theme-btn').style.background = currentTheme === 'dark' ? '#EEF1F8' : '#1a1a2e';
   try { localStorage.setItem('antenna-theme', currentTheme); } catch {}
-});
+  updateThemeControls();
+}
+
+updateThemeControls();
+document.getElementById('theme-btn').addEventListener('click', toggleTheme);
 
 // ============================================================
 // Custom proxy
@@ -4122,6 +4159,7 @@ document.getElementById('cloud-sync-now-btn').addEventListener('click', async ()
     btn.textContent = '同期';
   }
 });
+document.getElementById('settings-theme-toggle-btn').addEventListener('click', toggleTheme);
 
 // Keyboard shortcuts
 document.addEventListener('keydown', e => {
