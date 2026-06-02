@@ -302,15 +302,6 @@ body.light .tile-pin-btn:hover { color: #c09010; }
   font-size: 13px;
   font-weight: 600;
 }
-#custom-proxy-input {
-  width: 100%;
-  background: #0f3460;
-  border: 1px solid #1a4a8a;
-  border-radius: 4px;
-  padding: 7px 10px;
-  color: #e0e0e0;
-  font-size: 12px;
-}
 #custom-proxy-input,
 .cloud-input {
   width: 100%;
@@ -2089,6 +2080,12 @@ body:not(.light) #logo:hover::after {
 }
 
 @media (min-width: 761px) {
+  body.light #logo {
+    color: #64779f;
+  }
+  body.light #logo:hover #site-refresh-mark {
+    color: #64779f;
+  }
   #mobile-detail-back-btn {
     display: none;
   }
@@ -2249,7 +2246,7 @@ body:not(.light) #logo:hover::after {
 </div>
 
 <script>
-const APP_VERSION = '2026-06-01.cloud-mobile';
+const APP_VERSION = '2026-06-02.review-hardening';
 const CLOUD_STORAGE_KEY = 'antenna-cloud-config';
 const DEFAULT_CLOUD_PROFILE_ID = 'private-antenna';
 
@@ -2502,18 +2499,46 @@ async function fetchPage(siteUrl) {
 // ============================================================
 // Content extraction
 // ============================================================
+function removeNonVisibleAndChrome(root) {
+  if (!root) return;
+
+  const removeSelectors = [
+    'script', 'style', 'noscript', 'iframe', 'svg', 'template',
+    'nav', 'footer', 'header', 'aside', 'form',
+    '[hidden]', '[aria-hidden="true"]',
+    '[style*="display:none" i]', '[style*="display: none" i]',
+    '[style*="visibility:hidden" i]', '[style*="visibility: hidden" i]',
+    '[style*="opacity:0" i]', '[style*="opacity: 0" i]',
+    '.hide', '.hidden', '.sr-only', '.visually-hidden', '.screen-reader-text',
+    '#header', '#sp_header', '#header2', '#top_search', '#header_fixed_div',
+    '#footer', '#page_top', '#pagetop', '#fb-root', '#xp1',
+    '[role="navigation"]', '[role="banner"]', '[role="contentinfo"]', '[role="complementary"]',
+  ];
+
+  for (const sel of removeSelectors) {
+    try { root.querySelectorAll(sel).forEach(el => el.remove()); } catch {}
+  }
+
+  try {
+    root.querySelectorAll('*').forEach(el => {
+      const classText = String(el.getAttribute('class') || '');
+      if (/(^|\s)(hide|hidden|sr-only|visually-hidden|screen-reader-text)(\s|$)/i.test(classText)) {
+        el.remove();
+        return;
+      }
+      const style = String(el.getAttribute('style') || '').replace(/\s+/g, '').toLowerCase();
+      if (style.includes('display:none') || style.includes('visibility:hidden') || style.includes('opacity:0')) {
+        el.remove();
+      }
+    });
+  } catch {}
+}
+
 function extractPageContent(html, selector, ignoreSelector, ignoreTextPattern) {
   const doc = new DOMParser().parseFromString(html, 'text/html');
 
-  for (const sel of [
-    'script', 'style', 'noscript', 'iframe', 'svg',
-    'nav', 'footer', 'header', 'aside', 'form',
-    '[role="navigation"]', '[role="banner"]', '[role="contentinfo"]', '[role="complementary"]',
-  ]) {
-    try { doc.querySelectorAll(sel).forEach(el => el.remove()); } catch {}
-  }
-
   const title = doc.title?.trim() || doc.querySelector('h1')?.textContent?.trim() || '';
+  removeNonVisibleAndChrome(doc);
 
   let root = doc.body;
   if (selector) {
@@ -2522,6 +2547,8 @@ function extractPageContent(html, selector, ignoreSelector, ignoreTextPattern) {
       if (el) root = el;
     } catch {} // 無効なセレクタはフォールバック
   }
+
+  removeNonVisibleAndChrome(root);
 
   if (ignoreSelector && root) {
     try {
@@ -2549,10 +2576,7 @@ function extractPageImages(html, siteUrl, selector) {
   // og:image を最優先で取得（ノイズ除去前に head から取得）
   const ogImage = doc.querySelector('meta[property="og:image"]')?.getAttribute('content') || null;
 
-  // ノイズ要素を除去
-  for (const sel of ['script', 'style', 'noscript', 'iframe', 'svg', 'nav', 'footer', 'header', 'aside', 'form']) {
-    try { doc.querySelectorAll(sel).forEach(el => el.remove()); } catch {}
-  }
+  removeNonVisibleAndChrome(doc);
 
   let root = doc.body;
   if (selector) {
@@ -2563,8 +2587,7 @@ function extractPageImages(html, siteUrl, selector) {
   const results = [];
 
   const addUrl = (rawSrc) => {
-    if (!rawSrc || rawSrc.startsWith('data:image/gif') || rawSrc.startsWith('data:image/png')) return;
-    if (rawSrc.startsWith('data:')) return;
+    if (!rawSrc || rawSrc.startsWith('data:')) return;
     let abs;
     try { abs = new URL(rawSrc, siteUrl).href; } catch { return; }
     if (!sanitizeHttpUrl(abs)) return;
@@ -2764,6 +2787,18 @@ let viewMode = 'list'; // 'list' | 'tile' | 'image'
 let activeTag = null; // null = すべて表示
 let pinFilter = false;
 const imageCache = {}; // url -> string[] | 'loading' | 'error'
+const IMAGE_CACHE_LIMIT = 80;
+
+function setImageCache(url, value) {
+  if (!url) return;
+  delete imageCache[url];
+  imageCache[url] = value;
+  const keys = Object.keys(imageCache);
+  while (keys.length > IMAGE_CACHE_LIMIT) {
+    const oldest = keys.shift();
+    if (oldest) delete imageCache[oldest];
+  }
+}
 let cloudConfig = loadCloudConfig();
 let cloudSyncTimer = null;
 let cloudSyncPromise = Promise.resolve();
@@ -3000,16 +3035,34 @@ function getSiteVersion(site) {
 }
 
 function mergeSites(localSites, cloudSites) {
-  const map = new Map();
-  localSites.forEach(site => { if (site?.url) map.set(site.url, site); });
+  const localByUrl = new Map();
+  localSites.forEach(site => { if (site?.url) localByUrl.set(site.url, site); });
+  const merged = localSites.filter(site => site?.url);
+
   cloudSites.forEach(site => {
     if (!site?.url) return;
-    const current = map.get(site.url);
-    if (!current || getSiteVersion(site) > getSiteVersion(current)) {
-      map.set(site.url, site);
+    const current = localByUrl.get(site.url);
+    if (current) {
+      if (getSiteVersion(site) > getSiteVersion(current)) {
+        const checkingState = {
+          _checking: current._checking,
+          _checkPromise: current._checkPromise,
+        };
+        Object.keys(current).forEach(key => {
+          if (!key.startsWith('_')) delete current[key];
+        });
+        Object.assign(current, site);
+        if (checkingState._checking) current._checking = checkingState._checking;
+        if (checkingState._checkPromise) current._checkPromise = checkingState._checkPromise;
+      }
+    } else {
+      merged.push(site);
+      localByUrl.set(site.url, site);
     }
   });
-  return [...map.values()];
+
+  localSites.splice(0, localSites.length, ...merged);
+  return localSites;
 }
 
 function queueCloudSync(reason = 'change') {
@@ -3046,13 +3099,21 @@ async function loadCloudState() {
       buildCloudSelectUrl('antenna_sites', 'url,label,selector,ignore_selector,ignore_text_pattern,tags,pinned,added_at,last_checked_at,last_changed_at,prev_text,prev_hash,snippet,snippet_diff,status,error_msg,updated_at', 'updated_at.desc')
     );
     const cloudSites = rows.map(cloudSiteToLocal).filter(Boolean);
-    sites = mergeSites(sites, cloudSites);
+    const selectedUrl = selectedIndex >= 0 ? sites[selectedIndex]?.url : null;
+    const cloudByUrl = new Map(cloudSites.map(site => [site.url, site]));
+    const hasLocalChangesToPush = sites.some(site => {
+      if (!site?.url) return false;
+      const cloudSite = cloudByUrl.get(site.url);
+      return !cloudSite || getSiteVersion(site) > getSiteVersion(cloudSite);
+    });
+    mergeSites(sites, cloudSites);
+    if (selectedUrl) selectedIndex = sites.findIndex(site => site.url === selectedUrl);
     saveSites({ skipCloud: true });
     renderTagFilterBar();
     renderList();
     showDetail();
     updateCloudStatus('online');
-    await pushCloudState('merge');
+    if (hasLocalChangesToPush) await pushCloudState('merge');
     showStatus(`同期データを取得しました（サイト${sites.length}件）`, 5000, 'success');
     return true;
   } catch (err) {
@@ -3121,13 +3182,17 @@ function hideCheckLoader() {
 }
 
 function escapeHtml(s) {
-  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function hostnameOf(url) {
+  try { return new URL(url).hostname; } catch { return url; }
 }
 
 function getSiteLabelByUrl(url) {
   const site = sites.find(s => s.url === url);
   if (site?.label) return site.label;
-  try { return new URL(url).hostname; } catch { return url; }
+  return hostnameOf(url);
 }
 
 function relativeTime(date) {
@@ -3337,13 +3402,13 @@ function renderList() {
 
       const loadImages = () => {
         grid.innerHTML = '<div class="image-group-loading"><span class="site-checking-spinner"></span> 取得中…</div>';
-        imageCache[site.url] = 'loading';
+        setImageCache(site.url, 'loading');
         fetchPage(site.url).then(html => {
-          imageCache[site.url] = extractPageImages(html, site.url, site.selector);
+          setImageCache(site.url, extractPageImages(html, site.url, site.selector));
           const g = list.querySelector(`.image-grid[data-url="${CSS.escape(site.url)}"]`);
           if (g) renderImageGrid(g, imageCache[site.url], site);
         }).catch(() => {
-          imageCache[site.url] = 'error';
+          setImageCache(site.url, 'error');
           const g = list.querySelector(`.image-grid[data-url="${CSS.escape(site.url)}"]`);
           if (g) g.innerHTML = '<div class="image-group-empty">取得できませんでした</div>';
         });
@@ -3397,7 +3462,7 @@ function renderList() {
       : '';
 
     if (viewMode === 'tile') {
-      const domain = (() => { try { return new URL(site.url).hostname; } catch { return site.url; } })();
+      const domain = hostnameOf(site.url);
       item.innerHTML = `
         <div class="site-info">
           <div class="site-meta" style="margin-bottom:4px">
@@ -3418,7 +3483,7 @@ function renderList() {
         togglePin(originalIndex);
       });
     } else {
-      const domain = (() => { try { return new URL(site.url).hostname; } catch { return site.url; } })();
+      const domain = hostnameOf(site.url);
       const changedLabelFull = site.lastChangedAt ? relativeTime(site.lastChangedAt) : '';
       item.innerHTML = `
         <div class="row-header">
@@ -3795,7 +3860,7 @@ function bindTagsInput(container) {
 // Help tooltips
 // ============================================================
 const HELP_TEXTS = {
-  selector: `監視するページ範囲をCSSセレクタで指定します。<br>空欄の場合はページ全体を監視します。<br><br>例:<br><code>main</code> — メインコンテンツ領域<br><code>article</code> — 記事要素のみ<br><code>#content</code> — id="content" の要素<br><code>.post-body</code> — class="post-body" の要素`,
+  selector: `監視するページ範囲をCSSセレクタで指定します。<br>空欄の場合はページ全体を監視しますが、画面に出ない非表示要素やヘッダー・メニュー類は自動除外します。<br><br>例:<br><code>main</code> — メインコンテンツ領域<br><code>#main</code> — 自治体サイトなどの本文領域<br><code>article</code> — 記事要素のみ<br><code>#content</code> — id="content" の要素<br><code>.post-body</code> — class="post-body" の要素`,
   ignoreSelector: `監視範囲から除外するHTML要素をCSSセレクタで指定します。広告・サイドバーなど変化してもノイズになる要素を除外できます。カンマ区切りで複数指定可能。<br><br>例:<br><code>.ad, .ads</code> — 広告要素<br><code>.sidebar</code> — サイドバー<br><code>time, .date</code> — 日時表示`,
   ignoreText: `差分検出から除外するテキストを正規表現で指定します。アクセスカウンターや日時など頻繁に変わるがチェック不要なテキストを除外できます。<br><br>例:<br><code>閲覧数:\\s*\\d+</code> — 閲覧数カウンター<br><code>\\d+件のコメント</code> — コメント数<br><code>\\d{4}/\\d{2}/\\d{2}</code> — 日付表示`,
 };
@@ -3837,7 +3902,7 @@ function bindHelpIcons(container) {
 // Preset dropdowns
 // ============================================================
 const SELECTOR_PRESETS = {
-  selector: ['main', 'article', '#content', '.post-content', '.entry-content', '.main-content', '.article-body'],
+  selector: ['main', '#main', 'article', '#content', '.post-content', '.entry-content', '.main-content', '.article-body'],
   ignoreSelector: ['.ad, .ads, .advertisement', '.sidebar', '.comment, .comments', 'time, .date', '.share, .social', '.related-posts'],
   ignoreText: ['閲覧数:\\s*\\d+', '\\d+件のコメント', 'Copyright.*$', 'All Rights Reserved', '\\d{4}/\\d{2}/\\d{2} \\d{2}:\\d{2}'],
 };
@@ -3960,6 +4025,7 @@ async function addSite(inputUrl) {
     prevText: null,
     prevHash: null,
     snippet: null,
+    snippetDiff: null,
     status: 'unchecked',
     errorMsg: null,
     updatedAt: new Date(),
@@ -4133,6 +4199,7 @@ function deleteSite(index) {
   const removed = sites[index];
   const cachedProxy = proxyCache[url];
   sites.splice(index, 1);
+  delete imageCache[url];
   delete proxyCache[url];
   saveProxyCache();
   if (!saveSites()) {
@@ -4405,9 +4472,18 @@ document.getElementById('cloud-sync-now-btn').addEventListener('click', async ()
 document.getElementById('settings-theme-toggle-btn').addEventListener('click', toggleTheme);
 
 // Keyboard shortcuts
+function isShortcutOverlayOpen() {
+  return document.getElementById('settings-overlay')?.style.display !== 'none'
+    || document.getElementById('tile-overlay')?.classList.contains('open')
+    || document.getElementById('image-lightbox')?.classList.contains('open')
+    || document.body.classList.contains('mobile-detail-open');
+}
+
 document.addEventListener('keydown', e => {
   const ae = document.activeElement;
   if (['INPUT', 'TEXTAREA'].includes(ae.tagName) || ae.isContentEditable) return;
+  const overlayOpen = isShortcutOverlayOpen();
+  if (overlayOpen && !['Escape', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return;
   const sorted = visibleSites();
   const currentSortedIdx = sorted.findIndex(s => sites.indexOf(s) === selectedIndex);
 
