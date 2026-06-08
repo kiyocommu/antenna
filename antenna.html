@@ -1,0 +1,4609 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Web Antenna">
+<meta name="theme-color" content="#64779f">
+<title>Web Antenna</title>
+<link rel="icon" type="image/svg+xml" href="icons/app-icon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html {
+  height: 100%;
+  background: #0d1b2e;
+}
+body { min-height: 100%; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #0d1b2e;
+  color: #c8d6e5;
+  display: flex;
+  flex-direction: column;
+  height: var(--app-height, 100vh);
+  overflow: hidden;
+}
+
+/* ---- Header ---- */
+#header {
+  background: #16213e;
+  border-bottom: 0.5px solid #1a3a6e;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+#logo {
+  font-size: 18px;
+  font-weight: 600;
+  color: #e94560;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+#site-refresh-mark {
+  display: inline-block;
+  color: #b0bdd0;
+  font-size: 15px;
+  line-height: 1;
+  transform: translateY(-1px);
+  transition: color 0.2s, transform 0.2s;
+  flex-shrink: 0;
+}
+#logo:hover #site-refresh-mark {
+  color: #fff;
+  transform: translateY(-1px) rotate(24deg);
+}
+#url-input-wrapper {
+  position: relative;
+  flex: 1;
+  max-width: 480px;
+}
+#url-input {
+  width: 100%;
+  background: #0f3460;
+  border: 1px solid #1a4a8a;
+  border-radius: 6px;
+  padding: 8px 64px 8px 12px;
+  color: #e0e0e0;
+  font-size: 14px;
+  outline: none;
+}
+#url-input:focus { border-color: #e94560; }
+#add-btn {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #1a4a8a;
+  border: 1px solid #2a5aaa;
+  border-radius: 4px;
+  color: #e0e0e0;
+  font-size: 13px;
+  padding: 5px 12px;
+  cursor: pointer;
+}
+#add-btn:hover { background: #2a5aaa; }
+.header-btn {
+  background: #0f3460;
+  border: 1px solid #1a4a8a;
+  border-radius: 6px;
+  color: #e0e0e0;
+  font-size: 13px;
+  padding: 6px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.header-btn:hover { background: #1a4a8a; }
+.header-btn:disabled { opacity: 0.4; cursor: default; }
+/* Loading spinner */
+.spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid #333;
+  border-top-color: #e94560;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  vertical-align: middle;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---- Pin ---- */
+.row-pin-btn {
+  background: none;
+  border: none;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  color: #3a4a6a;
+  padding: 2px;
+  flex-shrink: 0;
+  opacity: 0.4;
+}
+.row-pin-btn.pinned,
+.row-pin-btn:hover { opacity: 1; color: #f0c040; }
+
+.tile-pin-btn {
+  background: none;
+  border: none;
+  font-size: 11px;
+  cursor: pointer;
+  color: #3a4a6a;
+  padding: 1px 3px;
+  opacity: 0.4;
+}
+.tile-pin-btn.pinned,
+.tile-pin-btn:hover { opacity: 1; color: #f0c040; }
+
+#tile-overlay-pin-btn.pinned { color: #f0c040 !important; border-color: #f0c040 !important; }
+
+body.light .row-pin-btn.pinned,
+body.light .row-pin-btn:hover { color: #c09010; }
+body.light .tile-pin-btn.pinned,
+body.light .tile-pin-btn:hover { color: #c09010; }
+
+/* ---- Check loader (floating) ---- */
+#check-loader {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 200;
+  pointer-events: none;
+  background: rgba(8, 12, 26, 0.92);
+  border: 1px solid #1a3a6a;
+  border-radius: 20px;
+  padding: 10px 18px;
+  display: none;
+  align-items: center;
+  gap: 10px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+}
+#check-loader.active { display: flex; }
+#check-loader-dots {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.check-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #1e3358;
+  flex-shrink: 0;
+}
+.check-dot.waiting {
+  animation: check-dot-wait 1.6s ease-in-out infinite;
+}
+.check-dot.done {
+  animation: check-dot-done 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+@keyframes check-dot-wait {
+  0%, 100% { background: #1e3358; transform: scale(0.8);  box-shadow: none; }
+  50%       { background: #2e4a88; transform: scale(1.15); box-shadow: 0 0 5px #2e4a8844; }
+}
+@keyframes check-dot-done {
+  0%   { transform: scale(1);   background: #1e3358; box-shadow: none; }
+  45%  { transform: scale(2.0); background: #ff6b8a; box-shadow: 0 0 14px #e94560; }
+  100% { transform: scale(1);   background: #e94560; box-shadow: 0 0 5px #e9456099; }
+}
+#check-loader-count {
+  font-size: 11px;
+  color: #8899cc;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+#check-loader.complete #check-loader-count { color: #5ecf8a; }
+#theme-btn {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  border: 1px solid #1a4a8a;
+  background: #EEF1F8;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  opacity: 0.25;
+  transition: opacity 0.2s;
+  margin-left: auto;
+}
+#theme-btn:hover { opacity: 0.7; }
+#settings-btn { padding: 6px; font-size: 14px; line-height: 1; aspect-ratio: 1 / 1; }
+#cloud-status {
+  border: 1px solid #2b4f76;
+  border-radius: 999px;
+  color: #7a8ba0;
+  font-size: 11px;
+  line-height: 1;
+  padding: 5px 8px;
+  white-space: nowrap;
+}
+#cloud-status.online {
+  border-color: #2e8a5a;
+  color: #5ecf8a;
+}
+#mobile-url-toggle-btn { display: none; }
+
+/* ---- Settings Modal ---- */
+#settings-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#settings-modal {
+  background: #16213e;
+  border: 1px solid #1a3a6e;
+  border-radius: 8px;
+  width: 380px;
+  max-width: 90vw;
+}
+#settings-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid #1a3a6e;
+  font-size: 14px;
+  font-weight: 600;
+  color: #c8d6e5;
+}
+#settings-close-btn {
+  background: none; border: none; color: #7a8ba0; cursor: pointer; font-size: 14px; padding: 2px 4px;
+}
+#settings-close-btn:hover { color: #c8d6e5; }
+#settings-modal-body { padding: 16px; }
+#settings-modal-body label { display: block; font-size: 12px; color: #7a8ba0; margin-bottom: 6px; }
+.settings-section {
+  border-top: 1px solid #1a3a6e;
+  padding-top: 14px;
+  margin-top: 14px;
+}
+.settings-section:first-child {
+  border-top: none;
+  padding-top: 0;
+  margin-top: 0;
+}
+.settings-section-title {
+  color: #e94560;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.settings-row { margin-top: 10px; }
+.settings-inline-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid #1a3a6e;
+  border-radius: 6px;
+  background: rgba(15, 52, 96, 0.38);
+}
+.settings-row-label {
+  color: #c8d6e5;
+  font-size: 13px;
+  font-weight: 600;
+}
+#custom-proxy-input,
+.cloud-input {
+  width: 100%;
+  background: #0f3460;
+  border: 1px solid #1a4a8a;
+  border-radius: 4px;
+  padding: 7px 10px;
+  color: #e0e0e0;
+  font-size: 12px;
+}
+#custom-proxy-input:focus,
+.cloud-input:focus { outline: none; border-color: #e94560; }
+#custom-proxy-input::placeholder,
+.cloud-input::placeholder { color: #3a4a5a; }
+.settings-hint { font-size: 11px; color: #5a6a7a; margin-top: 8px; line-height: 1.5; }
+.settings-action-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}
+#settings-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 10px 16px;
+  border-top: 1px solid #1a3a6e;
+}
+#settings-save-btn,
+#cloud-sync-now-btn {
+  min-width: 64px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  padding: 0 18px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+#cloud-sync-now-btn {
+  background: transparent;
+  border: 1px solid #2b4f76;
+  color: #b0bdd0;
+}
+#settings-save-btn {
+  background: #e94560;
+  border: 1px solid #e94560;
+  color: white;
+}
+#settings-theme-toggle-btn {
+  background: transparent;
+  border: 1px solid #2b4f76;
+  border-radius: 999px;
+  color: #b0bdd0;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 7px 12px;
+  white-space: nowrap;
+}
+#settings-save-btn:hover,
+#cloud-sync-now-btn:hover {
+  background: #17284a;
+  border-color: #e94560;
+  color: #fff;
+}
+#settings-save-btn:hover { background: #c73550; }
+#settings-theme-toggle-btn:hover {
+  background: #17284a;
+  border-color: #e94560;
+  color: #fff;
+}
+body.light #settings-modal { background: #EEF1F8; border-color: #C5CCE0; }
+body.light #settings-modal-header { color: #1a1a2e; border-color: #C5CCE0; }
+body.light #settings-modal-footer { border-color: #C5CCE0; }
+body.light .settings-section { border-color: #C5CCE0; }
+body.light .settings-row-label { color: #1a1a2e; }
+body.light .settings-inline-row {
+  background: var(--antenna-panel-soft);
+  border-color: var(--antenna-border);
+}
+body.light #custom-proxy-input,
+body.light .cloud-input { background: #D4DBEC; border-color: #C5CCE0; color: #1a1a2e; }
+body.light #custom-proxy-input::placeholder,
+body.light .cloud-input::placeholder { color: #9098b0; }
+
+/* ---- Main ---- */
+#main {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* ---- Site list panel ---- */
+#site-list-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+#site-list-header {
+  background: #16213e;
+  border-bottom: 0.5px solid #1a3a6e;
+  padding: 6px 12px;
+  font-size: 11px;
+  color: #7a8ba0;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 4px;
+}
+#site-count { margin-left: auto; }
+#site-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+.site-item {
+  padding: 8px 14px 8px 12px;
+  cursor: pointer;
+  border-bottom: 0.5px solid #1a2a42;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.site-item:hover { background: #1a2a4a; }
+.site-item.active { background: #1a2a4a; border-left: 2px solid #e94560; padding-left: 10px; }
+.site-favicon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  margin-top: 1px;
+  border-radius: 2px;
+  background: #0d1b2e;
+}
+.site-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.site-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #c8d6e5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.site-meta {
+  font-size: 10px;
+  color: #7a8ba0;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.site-url-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+.badge {
+  flex-shrink: 0;
+  font-size: 9px;
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-weight: bold;
+}
+.badge-unchecked { background: #0f3460; color: #7ab3ff; border: 1px solid #1a5080; }
+.badge-error { background: #3a1a1a; color: #e87070; border: 1px solid #5a2a2a; }
+.site-checking-spinner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid #3a1a22;
+  border-top-color: #e94560;
+  border-radius: 50%;
+  animation: spinner-rotate 0.8s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes spinner-rotate {
+  to { transform: rotate(360deg); }
+}
+
+/* ---- List mode row layout ---- */
+.row-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.row-title-group {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow: hidden;
+}
+.row-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #c8d6e5;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.row-time {
+  font-size: 10px;
+  color: #7a8ba0;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.row-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  margin-left: 4px;
+}
+.row-check-btn {
+  background: none;
+  border: 1px solid #1a3a6e;
+  border-radius: 3px;
+  color: #7a8ba0;
+  font-size: 14px;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.row-check-btn:hover { color: #c8d6e5; border-color: #c8d6e5; }
+.row-open-btn {
+  color: #4a7aaa;
+  text-decoration: none;
+  font-size: 10px;
+  white-space: nowrap;
+  padding: 2px 4px;
+}
+.row-open-btn:hover { color: #e94560; }
+.row-delete-btn {
+  background: none;
+  border: none;
+  color: #3a4a5a;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 1px 3px;
+  line-height: 1;
+}
+.row-delete-btn:hover { color: #e94560; }
+.row-meta {
+  font-size: 10px;
+  color: #7a8ba0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-left: 24px;
+  overflow: hidden;
+}
+.row-meta-item {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.row-meta-sep { opacity: 0.35; flex-shrink: 0; }
+.row-detail {
+  display: none;
+  padding: 8px 0 4px 0;
+  flex-direction: column;
+  gap: 10px;
+}
+.site-item.active .row-detail { display: flex; }
+#site-list.expand-all .row-detail { display: flex; }
+#expand-all-btn { background: none; border: 1px solid #1a3a6e; border-radius: 3px; color: #7a8ba0; font-size: 13px; padding: 1px 5px; cursor: pointer; line-height: 1; }
+#expand-all-btn:hover, #expand-all-btn.active { color: #e94560; border-color: #e94560; }
+body.light #expand-all-btn { border-color: #C5CCE0; color: #6a7090; }
+body.light #expand-all-btn:hover, body.light #expand-all-btn.active { color: #e94560; border-color: #e94560; }
+.row-selector-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.row-selector-label {
+  font-size: 10px;
+  color: #7a8ba0;
+  flex-shrink: 0;
+  white-space: nowrap;
+  width: 52px;
+}
+
+/* ---- Resizer ---- */
+#resizer { display: none; }
+
+/* ---- Detail panel (hidden; tile mode uses overlay) ---- */
+#detail-panel { display: none; }
+#detail-header {
+  background: #16213e;
+  border-bottom: 0.5px solid #1a3a6e;
+  padding: 0 14px;
+  height: 36px;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+#detail-title {
+  font-weight: bold;
+  font-size: 13px;
+  color: #c8d6e5;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#detail-open-btn {
+  color: #7a8ba0;
+  text-decoration: none;
+  font-size: 11px;
+  white-space: nowrap;
+}
+#detail-open-btn:hover { color: #e94560; }
+#check-single-btn {
+  background: none;
+  border: 1px solid #1a3a6e;
+  border-radius: 4px;
+  color: #7a8ba0;
+  font-size: 15px;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+#check-single-btn:hover { color: #c8d6e5; border-color: #c8d6e5; }
+#delete-site-btn {
+  background: none;
+  border: none;
+  color: #3a4a5a;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 2px 4px;
+}
+#delete-site-btn:hover { color: #e94560; }
+#detail-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
+}
+#detail-empty {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #3a4a5a;
+  font-size: 13px;
+}
+
+/* ---- Monitor settings collapsible ---- */
+.monitor-settings-details { border: none; outline: none; }
+.monitor-settings-summary {
+  list-style: none;
+  cursor: pointer;
+  font-size: 11px;
+  color: #4a6a8a;
+  user-select: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.monitor-settings-summary::-webkit-details-marker { display: none; }
+.monitor-settings-summary::before {
+  content: '▶';
+  font-size: 9px;
+  transition: transform 0.15s;
+  display: inline-block;
+}
+.monitor-settings-details[open] > .monitor-settings-summary::before { transform: rotate(90deg); }
+.monitor-settings-summary:hover { color: #7a9aba; }
+.monitor-settings-body { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+.row-monitor-details { margin-top: 2px; }
+body.light .monitor-settings-summary { color: #7a90b0; }
+body.light .monitor-settings-summary:hover { color: #4a6a9a; }
+/* ---- Help icon & tooltip ---- */
+.help-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 13px; height: 13px; border-radius: 50%;
+  background: #1a3a6e; color: #7a9aba;
+  font-size: 9px; font-weight: bold; font-style: normal;
+  cursor: pointer; flex-shrink: 0; line-height: 1;
+  vertical-align: middle; margin-left: 3px; user-select: none;
+}
+.help-icon:hover { background: #2a4a8e; color: #b0d0f0; }
+.help-tooltip {
+  position: fixed; z-index: 200;
+  background: #0a1525; border: 1px solid #2a4a7e;
+  border-radius: 6px; padding: 10px 12px;
+  font-size: 11px; line-height: 1.7; color: #a0b8d0;
+  width: 260px; box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+  pointer-events: none;
+}
+.help-tooltip code {
+  background: #1a3a5e; padding: 1px 4px; border-radius: 3px;
+  font-family: monospace; color: #c8e0f8; font-size: 10px;
+}
+/* ---- Preset dropdown ---- */
+.preset-wrap { position: relative; }
+.selector-preset-dropdown {
+  position: absolute; z-index: 101; left: 0; top: calc(100% + 2px);
+  background: #0d1b2e; border: 1px solid #2a4a7e;
+  border-radius: 4px; width: 100%; max-height: 130px; overflow-y: auto;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+.preset-item {
+  padding: 5px 10px; font-size: 11px; color: #7a9aba;
+  cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.preset-item:hover { background: #1a3a5e; color: #c8d6e5; }
+/* ---- Monitor test ---- */
+.monitor-test-btn {
+  align-self: flex-start; margin-top: 2px;
+  background: transparent; border: 1px solid #2a4a7e;
+  border-radius: 4px; color: #7a9aba;
+  font-size: 11px; padding: 3px 10px; cursor: pointer;
+}
+.monitor-test-btn:hover { border-color: #7a9aba; color: #b0d0f0; }
+.monitor-test-btn:disabled { opacity: 0.5; cursor: default; }
+.monitor-test-result {
+  margin-top: 6px; padding: 8px 10px;
+  background: #0a1525; border: 1px solid #1a3a6e;
+  border-radius: 4px; font-size: 11px; color: #7a9aba;
+  line-height: 1.6; word-break: break-all; white-space: pre-wrap; display: none;
+}
+.monitor-test-result.warn { color: #d0a040; border-color: #6a5020; }
+.monitor-test-result.error { color: #e04060; border-color: #6a2030; }
+body.light .help-icon { background: #c0cadf; color: #4a6a9a; }
+body.light .help-icon:hover { background: #aab5d0; color: #2a4a7a; }
+body.light .help-tooltip { background: #f0f4fc; border-color: #a0aec8; color: #3a4a6a; }
+body.light .help-tooltip code { background: #d0d8f0; color: #2a4a7a; }
+body.light .selector-preset-dropdown { background: #E2E7F2; border-color: #a0aec8; }
+body.light .preset-item { color: #4a6a9a; }
+body.light .preset-item:hover { background: #c0cadf; color: #1a1a2e; }
+body.light .monitor-test-btn { border-color: #a0aec8; color: #4a6a9a; }
+body.light .monitor-test-btn:hover { border-color: #4a6a9a; color: #1a1a2e; }
+body.light .monitor-test-result { background: #e4eaf6; border-color: #b0bcd8; color: #4a6a9a; }
+body.light .monitor-test-result.warn { color: #8a6010; border-color: #c0a040; }
+body.light .monitor-test-result.error { color: #a02030; border-color: #d04050; }
+
+/* ---- Detail info ---- */
+.info-block { display: flex; flex-direction: column; gap: 14px; }
+.info-row { display: flex; gap: 8px; font-size: 12px; align-items: flex-start; }
+.info-label { color: #7a8ba0; width: 76px; flex-shrink: 0; padding-top: 1px; }
+.info-value { color: #c8d6e5; flex: 1; word-break: break-all; }
+.selector-input, .tags-input, .ignore-selector-input, .ignore-text-input {
+  width: 100%;
+  background: #0d1b2e;
+  border: 1px solid #1a3a6e;
+  border-radius: 4px;
+  color: #c8d6e5;
+  font-size: 12px;
+  padding: 4px 8px;
+  outline: none;
+}
+.selector-input:focus, .tags-input:focus, .ignore-selector-input:focus, .ignore-text-input:focus { border-color: #e94560; }
+.selector-input::placeholder, .tags-input::placeholder, .ignore-selector-input::placeholder, .ignore-text-input::placeholder { color: #3a4a5a; }
+.info-value a { color: #7ab3ff; text-decoration: none; }
+.info-value a:hover { text-decoration: underline; }
+.snippet-block { display: flex; flex-direction: column; gap: 8px; }
+.snippet-label { font-size: 11px; color: #7a8ba0; }
+.snippet-box {
+  background: #0d1b2e;
+  border: 1px solid #1a3a6e;
+  border-radius: 4px;
+  padding: 12px 14px;
+  font-size: 12px;
+  line-height: 1.8;
+  color: #a8bcd0;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.snippet-box.diff { padding: 0; }
+.diff-line {
+  padding: 3px 14px;
+  font-size: 12px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-all;
+  display: flex;
+  gap: 8px;
+}
+.diff-prefix { flex-shrink: 0; width: 10px; }
+.diff-add  { background: #0a1f0a; color: #5a9e66; }
+.diff-del  { background: #1f0a0a; color: #a85050; }
+.diff-del > span:last-child,
+.diff-add > span:last-child {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+.diff-del.has-inline > span:last-child,
+.diff-add.has-inline > span:last-child { white-space: normal; overflow: visible; text-overflow: clip; }
+.diff-del:not(.has-inline),
+.diff-add:not(.has-inline) { cursor: pointer; }
+.diff-del.expanded > span:last-child,
+.diff-add.expanded > span:last-child { white-space: normal; overflow: visible; text-overflow: clip; }
+.diff-del .idel { background: #5a1818; border-radius: 2px; }
+.diff-add .iadd { background: #1a5020; border-radius: 2px; }
+.diff-ctx  { color: #4a5a6a; }
+.diff-omit { padding: 2px 14px; font-size: 11px; color: #3a4a5a; text-align: center; letter-spacing: 0.1em; }
+body.light .snippet-box.diff { background: #f0f4fa; }
+body.light .diff-add  { background: #e4f0e4; color: #4a7a4a; }
+body.light .diff-del  { background: #f0e4e4; color: #9a4a4a; }
+body.light .diff-del .idel { background: #e0aaaa; }
+body.light .diff-add .iadd { background: #aae0aa; }
+body.light .diff-ctx  { color: #8a90a8; }
+body.light .diff-omit { color: #a0a8c0; }
+
+.no-change { color: #3a6a4a; font-size: 12px; padding: 4px 0; }
+@keyframes recency-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.2; }
+}
+.recency-justnow { color: #e94560; font-weight: bold; animation: recency-blink 1.2s ease-in-out infinite; }
+.recency-fresh  { color: #e94560; font-weight: bold; }
+.recency-recent { color: #f0a040; font-weight: bold; }
+.recency-today  { color: #c8d6e5; }
+.recency-old    { color: #7a8ba0; }
+.error-text { color: #8a4a4a; font-size: 12px; padding: 4px 0; }
+
+/* ---- Status bar ---- */
+#statusbar {
+  background: #16213e;
+  border-top: 0.5px solid #1a3a6e;
+  padding: 3px 16px;
+  font-size: 10px;
+  color: #7a8ba0;
+  flex-shrink: 0;
+  height: 22px;
+  display: flex;
+  align-items: center;
+}
+#status {
+  position: fixed;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #0f3460;
+  border: 1px solid #1a4a8a;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 13px;
+  color: #e0e0e0;
+  display: none;
+  z-index: 300;
+  max-width: 80vw;
+  line-height: 1.5;
+  text-align: center;
+}
+#status.success {
+  border-color: #4aaa70;
+  color: #6ee89e;
+}
+#status.error {
+  border-color: #e94560;
+  color: #ff7a8a;
+}
+
+/* ---- Shortcuts ---- */
+#shortcuts {
+  padding: 6px 16px;
+  background: #0d1b2e;
+  border-top: 1px solid #0f3460;
+  font-size: 11px;
+  color: #777;
+  display: flex;
+  gap: 16px;
+  flex-shrink: 0;
+}
+.shortcut kbd {
+  background: #1a2a4a;
+  border: 1px solid #0f3460;
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-family: monospace;
+  font-size: 11px;
+  color: #888;
+}
+
+/* ---- Scrollbar ---- */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #1a3a6e; border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: #2a5a9e; }
+
+/* ---- Tile mode ---- */
+#main.tile-mode #site-list-panel { flex: 1; width: auto; max-width: none; border-right: none; }
+#main.tile-mode #resizer { display: none; }
+#main.tile-mode #detail-panel { display: none; }
+#main.tile-mode #expand-all-btn { display: none; }
+#main.tile-mode #site-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+  padding: 12px;
+  align-content: start;
+}
+#main.tile-mode .site-item {
+  border: 1px solid #1a3a6e;
+  border-bottom: 1px solid #1a3a6e;
+  border-radius: 6px;
+  background: #16213e;
+  padding: 12px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+#main.tile-mode .site-item:hover { background: #1a2a4a; border-color: #2a4a8a; }
+#main.tile-mode .site-item.active { border-color: #e94560; background: #1a2a4a; border-left-width: 1px; padding-left: 12px; }
+#main.tile-mode .site-item .site-label { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+#main.tile-mode .site-item .site-info { width: 100%; }
+.tile-snippet { font-size: 11px; color: #7a8ba0; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical; overflow: hidden; word-break: break-all; }
+.tile-domain { font-size: 10px; color: #4a6a8a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tile-open-btn { display: inline-block; font-size: 10px; color: #4a7aaa; text-decoration: none; margin-top: 2px; align-self: flex-start; }
+.tile-open-btn:hover { color: #e94560; }
+/* ---- Image mode ---- */
+#main.image-mode #site-list-panel { flex: 1; width: auto; max-width: none; border-right: none; }
+#main.image-mode #resizer { display: none; }
+#main.image-mode #detail-panel { display: none; }
+#main.image-mode #expand-all-btn { display: none; }
+#main.image-mode #site-list { display: flex; flex-direction: column; gap: 16px; padding: 12px; }
+.image-group { display: flex; flex-direction: column; gap: 8px; }
+.image-group-header { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #c8d6e5; font-weight: bold; padding-bottom: 4px; border-bottom: 1px solid #1a3a6e; }
+.image-group-header .favicon { width: 14px; height: 14px; flex-shrink: 0; }
+.image-group-header a { color: #7a8ba0; text-decoration: none; font-size: 11px; flex-shrink: 0; }
+.image-group-header a:hover { color: #e94560; }
+.image-reload-btn { background: none; border: none; color: #7a8ba0; font-size: 13px; cursor: pointer; padding: 0 2px; flex-shrink: 0; line-height: 1; margin-left: auto; }
+.image-reload-btn:hover { color: #e94560; }
+.image-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 6px; }
+.image-card { border-radius: 4px; overflow: hidden; background: #999999; border: 1px solid #1a3a6e; cursor: pointer; position: relative; }
+.image-card img { width: 100%; aspect-ratio: 4/3; object-fit: contain; display: block; background: #999999; }
+.image-size { position: absolute; bottom: 2px; right: 4px; font-size: 9px; color: rgba(255,255,255,0.4); pointer-events: none; line-height: 1; }
+.image-card:hover { border-color: #e94560; }
+.image-group-empty { font-size: 11px; color: #3a4a5a; padding: 4px 0; }
+.image-group-loading { font-size: 11px; color: #4a6a8a; padding: 4px 0; display: flex; align-items: center; gap: 6px; }
+
+/* ---- Image lightbox ---- */
+#image-lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 200; justify-content: center; align-items: center; }
+#image-lightbox.open { display: flex; }
+#image-lightbox-panel { position: relative; display: flex; flex-direction: column; align-items: center; gap: 10px; max-width: 92vw; }
+#image-lightbox-img { max-width: 88vw; max-height: 82vh; object-fit: contain; border-radius: 4px; display: block; }
+#image-lightbox-close { position: fixed; top: 14px; right: 18px; background: none; border: none; color: #7a8ba0; font-size: 22px; cursor: pointer; z-index: 201; line-height: 1; }
+#image-lightbox-close:hover { color: #e94560; }
+#image-lightbox-prev, #image-lightbox-next { position: fixed; top: 50%; transform: translateY(-50%); background: rgba(13,27,46,0.7); border: 1px solid #1a3a6e; color: #c8d6e5; font-size: 28px; width: 40px; height: 60px; cursor: pointer; border-radius: 4px; display: flex; align-items: center; justify-content: center; }
+#image-lightbox-prev { left: 10px; }
+#image-lightbox-next { right: 10px; }
+#image-lightbox-prev:hover, #image-lightbox-next:hover { border-color: #e94560; color: #e94560; }
+#image-lightbox-footer { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #c8d6e5; }
+#image-lightbox-footer .favicon { width: 14px; height: 14px; }
+#image-lightbox-link { color: #7ab3ff; text-decoration: none; font-size: 11px; }
+#image-lightbox-link:hover { text-decoration: underline; }
+
+/* ---- Tile overlay ---- */
+#tile-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 100;
+  justify-content: center;
+  align-items: center;
+}
+#tile-overlay.open { display: flex; }
+#tile-overlay-panel {
+  background: #16213e;
+  border: 0.5px solid #1a3a6e;
+  border-radius: 8px;
+  width: min(520px, 90vw);
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+#tile-overlay-header {
+  padding: 0 14px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 0.5px solid #1a3a6e;
+  flex-shrink: 0;
+}
+#tile-overlay-title {
+  font-size: 13px;
+  font-weight: bold;
+  color: #c8d6e5;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#tile-overlay-body { flex: 1; overflow-y: auto; padding: 20px 24px; }
+#detail-close-btn {
+  display: none;
+  background: none;
+  border: none;
+  color: #7a8ba0;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 2px 4px;
+  line-height: 1;
+}
+#detail-close-btn:hover { color: #e94560; }
+
+/* ---- Button design unification ---- */
+#add-btn,
+.header-btn {
+  background: transparent;
+  border: 1px solid #2b4f76;
+  border-radius: 999px;
+  color: #b0bdd0;
+  transition: background 0.2s, border-color 0.2s, color 0.2s, opacity 0.2s, filter 0.15s, box-shadow 0.15s;
+}
+#add-btn:hover,
+.header-btn:hover {
+  background: #17284a;
+  border-color: #e94560;
+  color: #fff;
+}
+#settings-btn {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#expand-all-btn,
+#pin-filter-btn,
+#view-toggle-btn,
+#image-mode-btn,
+.tag-filter-btn,
+.row-check-btn,
+#check-single-btn,
+.monitor-test-btn,
+#tile-overlay-check-btn,
+#tile-overlay-pin-btn,
+#image-lightbox-prev,
+#image-lightbox-next,
+#settings-save-btn,
+#cloud-sync-now-btn {
+  background: transparent;
+  border: 1px solid #2b4f76;
+  border-radius: 4px;
+  color: #7a8ba0;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, opacity 0.15s, filter 0.15s, box-shadow 0.15s;
+}
+#tile-overlay-check-btn,
+#tile-overlay-pin-btn {
+  background: transparent !important;
+  border-color: #2b4f76 !important;
+  color: #7a8ba0 !important;
+}
+#expand-all-btn:hover,
+#pin-filter-btn:hover,
+#view-toggle-btn:hover,
+#image-mode-btn:hover,
+.tag-filter-btn:hover,
+.row-check-btn:hover,
+#check-single-btn:hover,
+.monitor-test-btn:hover,
+#tile-overlay-check-btn:hover,
+#tile-overlay-pin-btn:hover,
+#image-lightbox-prev:hover,
+#image-lightbox-next:hover,
+#settings-save-btn:hover,
+#cloud-sync-now-btn:hover {
+  background: #17284a;
+  border-color: #e94560;
+  color: #fff;
+}
+#tile-overlay-check-btn:hover,
+#tile-overlay-pin-btn:hover {
+  background: #17284a !important;
+  border-color: #e94560 !important;
+  color: #fff !important;
+}
+#cloud-sync-now-btn {
+  background: transparent;
+  border-color: #2b4f76;
+  color: #b0bdd0;
+}
+#cloud-sync-now-btn:hover {
+  background: #17284a;
+  border-color: #e94560;
+  color: #fff;
+}
+#settings-save-btn {
+  background: #e94560;
+  border-color: #e94560;
+  color: #fff;
+}
+#settings-save-btn:hover {
+  background: #c73550;
+  border-color: #c73550;
+  color: #fff;
+}
+#expand-all-btn.active,
+#pin-filter-btn.active,
+#view-toggle-btn.active,
+#image-mode-btn.active,
+.tag-filter-btn.active {
+  background: rgba(233, 69, 96, 0.12);
+  border-color: #e94560;
+  color: #e94560;
+}
+
+.view-mode-btn {
+  width: 28px;
+  height: 24px;
+  min-width: 28px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+}
+#pin-filter-btn.view-mode-btn { margin-left: 6px; }
+#site-list-header .view-mode-btn + .view-mode-btn { margin-left: 2px; }
+
+button[data-tooltip] {
+  position: relative;
+}
+button[data-tooltip]::before,
+button[data-tooltip]::after {
+  position: absolute;
+  left: 50%;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -2px);
+  transition: opacity 0.09s ease, transform 0.09s ease;
+  z-index: 5000;
+}
+button[data-tooltip]::after {
+  content: attr(data-tooltip);
+  top: calc(100% + 14px);
+  padding: 5px 7px;
+  border: 1px solid #2b4f76;
+  border-radius: 5px;
+  background: #d7e3f0;
+  color: #0d1b2e;
+  font: 11px/1.2 "Helvetica Neue", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  letter-spacing: 0;
+  white-space: nowrap;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.22);
+}
+button[data-tooltip]::before {
+  content: "";
+  top: calc(100% + 9px);
+  width: 7px;
+  height: 7px;
+  background: #d7e3f0;
+  border-left: 1px solid #2b4f76;
+  border-top: 1px solid #2b4f76;
+  transform: translate(-50%, -2px) rotate(45deg);
+}
+button[data-tooltip]:hover::before,
+button[data-tooltip]:hover::after,
+button[data-tooltip]:focus-visible::before,
+button[data-tooltip]:focus-visible::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+button[data-tooltip]:hover::before,
+button[data-tooltip]:focus-visible::before {
+  transform: translate(-50%, 0) rotate(45deg);
+}
+button[data-tooltip][data-tooltip-pos="top"]::after {
+  top: auto;
+  bottom: calc(100% + 8px);
+  transform: translate(-50%, 2px);
+}
+button[data-tooltip][data-tooltip-pos="top"]::before {
+  top: auto;
+  bottom: calc(100% + 3px);
+  transform: translate(-50%, 2px) rotate(225deg);
+}
+button[data-tooltip][data-tooltip-pos="top"]:hover::after,
+button[data-tooltip][data-tooltip-pos="top"]:focus-visible::after {
+  transform: translate(-50%, 0);
+}
+button[data-tooltip][data-tooltip-pos="top"]:hover::before,
+button[data-tooltip][data-tooltip-pos="top"]:focus-visible::before {
+  transform: translate(-50%, 0) rotate(225deg);
+}
+button[data-tooltip][data-tooltip-align="right"]::after {
+  left: auto;
+  right: 0;
+  transform: translate(0, -2px);
+}
+button[data-tooltip][data-tooltip-align="right"]:hover::after,
+button[data-tooltip][data-tooltip-align="right"]:focus-visible::after {
+  transform: translate(0, 0);
+}
+#image-lightbox-close,
+#image-lightbox-prev,
+#image-lightbox-next {
+  position: fixed;
+}
+
+.row-pin-btn,
+.tile-pin-btn {
+  background: transparent;
+  border: 1px solid #2b4f76;
+  border-radius: 4px;
+  color: #7a8ba0;
+  filter: grayscale(1);
+  opacity: 0.56;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, opacity 0.15s, filter 0.15s, box-shadow 0.15s;
+}
+.row-pin-btn {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+}
+.tile-pin-btn {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+}
+.row-pin-btn:hover,
+.tile-pin-btn:hover {
+  background: transparent;
+  border-color: #3d5f84;
+  color: #a7bdd3;
+  filter: grayscale(0.35);
+  opacity: 0.82;
+}
+.row-pin-btn.pinned,
+.tile-pin-btn.pinned,
+#tile-overlay-pin-btn.pinned {
+  background: #f0e04022 !important;
+  border-color: #f0e040aa !important;
+  color: #f0e040 !important;
+  filter: none;
+  opacity: 1;
+  box-shadow: 0 0 8px #f0e04055;
+}
+
+.row-delete-btn,
+#delete-site-btn,
+#detail-close-btn,
+#settings-close-btn,
+#image-lightbox-close,
+.image-reload-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: #7a8ba0;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, opacity 0.15s;
+}
+.row-delete-btn:hover,
+#delete-site-btn:hover,
+#detail-close-btn:hover,
+#settings-close-btn:hover,
+#image-lightbox-close:hover {
+  background: rgba(233, 69, 96, 0.08);
+  border-color: #e94560;
+  color: #e94560;
+}
+.image-reload-btn:hover {
+  border-color: #e94560;
+  color: #e94560;
+}
+
+.row-open-btn,
+#detail-open-btn,
+.tile-open-btn,
+#tile-overlay-open-btn,
+#image-lightbox-link,
+.image-group-header a {
+  color: #7a9aba;
+  text-decoration: none;
+  transition: color 0.15s;
+}
+.row-open-btn:hover,
+#detail-open-btn:hover,
+.tile-open-btn:hover,
+#tile-overlay-open-btn:hover,
+#image-lightbox-link:hover,
+.image-group-header a:hover {
+  color: #e94560;
+}
+
+/* ---- Light mode ---- */
+body.light { background: #EEF1F8; color: #1a1a2e; }
+body.light #header,
+body.light #site-list-header,
+body.light #detail-header,
+body.light #statusbar { background: #E2E7F2; border-color: #C5CCE0; }
+body.light #status { background: #E2E7F2; border-color: #C5CCE0; color: #1a1a2e; }
+body.light #status.success { border-color: #82b59c; color: #2f7a54; }
+body.light #status.error { border-color: #e94560; color: #c0392b; }
+body.light #check-loader { background: rgba(238,241,248,0.97); border-color: #B8C2D8; box-shadow: 0 8px 32px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.6); }
+body.light #check-loader-header { color: #6a7090; }
+body.light .check-dot { background: #C5CCE0; }
+body.light #site-list-panel { border-color: #C5CCE0; }
+body.light #resizer:hover, body.light #resizer.dragging { background: #e94560; }
+body.light #url-input { background: #D4DBEC; border-color: #C5CCE0; color: #1a1a2e; }
+body.light #url-input:focus { border-color: #e94560; }
+body.light #site-list { background: #EEF1F8; }
+body.light .site-item { border-color: #D4DBEC; }
+body.light .site-item:hover,
+body.light .site-item.active { background: #D4DBEC; }
+body.light .site-label { color: #1a1a2e; }
+body.light .site-meta { color: #6a7090; }
+body.light .badge-unchecked { background: #d4e4f8; color: #2a5a9e; border-color: #b4c8e8; }
+body.light .badge-error { background: #f8d4d4; color: #8a2a2a; border-color: #e8b4b4; }
+body.light #detail-title { color: #1a1a2e; }
+body.light #detail-content { background: #EEF1F8; }
+body.light .snippet-box { background: #D4DBEC; border-color: #C5CCE0; color: #3a4a6a; }
+body.light .info-label { color: #6a7090; }
+body.light .info-value { color: #1a1a2e; }
+body.light .selector-input, body.light .tags-input, body.light .ignore-selector-input, body.light .ignore-text-input { background: #D4DBEC; border-color: #C5CCE0; color: #1a1a2e; }
+body.light .selector-input:focus, body.light .tags-input:focus, body.light .ignore-selector-input:focus, body.light .ignore-text-input:focus { border-color: #e94560; }
+body.light .selector-input::placeholder, body.light .tags-input::placeholder, body.light .ignore-selector-input::placeholder, body.light .ignore-text-input::placeholder { color: #9098b0; }
+body.light .no-change { color: #2a6a3a; }
+body.light .error-text { color: #8a2a2a; }
+body.light #shortcuts { background: #E2E7F2; border-color: #C5CCE0; color: #8a90a0; }
+body.light .shortcut kbd { background: #D4DBEC; border-color: #C5CCE0; color: #4a5a7a; }
+body.light #add-btn { background: #B8C2D8; border-color: #A8B3CC; color: #1a1a2e; }
+body.light #add-btn:hover { background: #A8B3CC; }
+body.light .header-btn { background: #D4DBEC; border-color: #C5CCE0; color: #1a1a2e; }
+body.light .header-btn:hover { background: #C5CCE0; }
+body.light .spinner { border-color: #C5CCE0; border-top-color: #e94560; }
+body.light #check-single-btn { border-color: #C5CCE0; color: #6a7090; }
+body.light #check-single-btn:hover { color: #1a1a2e; border-color: #1a1a2e; }
+body.light #delete-site-btn { color: #b0b8cc; }
+body.light #delete-site-btn:hover { color: #e94560; }
+body.light #theme-btn { background: #1a1a2e; border-color: #8890aa; }
+body.light #detail-empty { color: #b0b8cc; }
+body.light #main.tile-mode .site-item { border-color: #C5CCE0; background: #E2E7F2; }
+body.light #main.tile-mode .site-item:hover { background: #D4DBEC; border-color: #A8B3CC; }
+body.light #main.tile-mode .site-item.active { border-color: #e94560; }
+body.light .tile-snippet { color: #6a7090; }
+body.light .tile-domain { color: #8a9ab0; }
+body.light .tile-open-btn { color: #2a6aaa; }
+body.light #view-toggle-btn { border-color: #C5CCE0; color: #6a7090; }
+body.light #view-toggle-btn:hover, body.light #view-toggle-btn.active { color: #e94560; border-color: #e94560; }
+body.light #image-mode-btn { border-color: #C5CCE0; color: #6a7090; }
+body.light #image-mode-btn:hover, body.light #image-mode-btn.active { color: #e94560; border-color: #e94560; }
+body.light .image-group-header { color: #1a1a2e; border-color: #C5CCE0; }
+body.light .image-card { border-color: #C5CCE0; background: #ffffff; }
+body.light .image-card img { background: #ffffff; }
+body.light .image-card:hover { border-color: #e94560; }
+body.light #image-lightbox-panel { color: #1a1a2e; }
+body.light #image-lightbox-prev, body.light #image-lightbox-next { background: rgba(220,228,240,0.85); border-color: #C5CCE0; color: #1a1a2e; }
+body.light #pin-filter-btn { border-color: #C5CCE0; color: #6a7090; }
+body.light #pin-filter-btn:hover, body.light #pin-filter-btn.active { color: #e94560; border-color: #e94560; }
+body.light #detail-close-btn { color: #6a7090; }
+body.light #detail-close-btn:hover { color: #e94560; }
+body.light #tile-overlay-panel { background: #E2E7F2; border-color: #C5CCE0; }
+body.light #tile-overlay-header { border-color: #C5CCE0; }
+body.light #tile-overlay-title { color: #1a1a2e; }
+body.light #tile-overlay-body { background: #EEF1F8; }
+body.light ::-webkit-scrollbar-thumb { background: #C5CCE0; }
+body.light .recency-justnow { color: #c0203a; }
+body.light .recency-fresh  { color: #c0203a; }
+body.light .recency-recent { color: #c07010; }
+body.light .recency-today  { color: #2a3a5a; }
+body.light .recency-old    { color: #6a7090; }
+body.light .row-label { color: #1a1a2e; }
+body.light .row-time { color: #6a7090; }
+body.light .row-meta { color: #6a7090; }
+body.light .row-check-btn { border-color: #C5CCE0; color: #6a7090; }
+body.light .row-check-btn:hover { color: #1a1a2e; border-color: #1a1a2e; }
+body.light .row-open-btn { color: #2a6aaa; }
+body.light .row-delete-btn { color: #b0b8cc; }
+body.light .row-delete-btn:hover { color: #e94560; }
+body.light .row-selector-label { color: #6a7090; }
+body.light #tile-overlay-check-btn { border-color: #C5CCE0; color: #6a7090; }
+body.light #tile-overlay-check-btn:hover { color: #1a1a2e; border-color: #1a1a2e; }
+body.light #tile-overlay-open-btn { color: #2a6aaa; }
+body.light #tag-filter-bar { border-bottom-color: #d0d8e8; }
+body.light .tag-filter-btn { color: #5a6a80; border-color: #c0cad8; }
+body.light .tag-filter-btn:hover { color: #1a2a3a; border-color: #3a5a8a; }
+body.light .tag-filter-btn.active { color: #e94560; border-color: #e94560; background: #f0f4fa; }
+body.light .site-tag { background: #e0eaf8; border-color: #b0c8e8; color: #2a5a9e; }
+body.light .site-tag:hover { border-color: #e94560; color: #e94560; }
+
+/* RSS Reader based light palette overrides */
+body.light {
+  --antenna-bg: #f7f5f0;
+  --antenna-panel: #fffdf8;
+  --antenna-panel-soft: #efebe3;
+  --antenna-text: #2a2723;
+  --antenna-muted: #867e73;
+  --antenna-border: #ddd6ca;
+  --antenna-accent: #64779f;
+  --antenna-accent-soft: #e3e8f1;
+  --antenna-link: #526792;
+  background: var(--antenna-bg);
+  color: var(--antenna-text);
+}
+body.light #logo {
+  color: var(--antenna-accent);
+}
+body.light #logo:hover #site-refresh-mark {
+  color: var(--antenna-accent);
+}
+body.light #header,
+body.light #site-list-header,
+body.light #detail-header,
+body.light #statusbar,
+body.light #shortcuts {
+  background: var(--antenna-panel);
+  border-color: var(--antenna-border);
+  color: var(--antenna-muted);
+}
+body.light #status {
+  background: var(--antenna-panel-soft);
+  border-color: var(--antenna-border);
+  color: var(--antenna-text);
+}
+body.light #status.success {
+  border-color: #82b59c;
+  color: #2f7a54;
+}
+body.light #status.error {
+  border-color: var(--antenna-accent);
+  color: var(--antenna-accent);
+}
+body.light #shortcuts {
+  border-top-color: var(--antenna-border);
+}
+body.light #cloud-status {
+  border-color: var(--antenna-border);
+  color: var(--antenna-muted);
+}
+body.light #cloud-status.online {
+  border-color: #82b59c;
+  color: #2f7a54;
+}
+body.light .shortcut kbd {
+  background: var(--antenna-panel-soft);
+  border-color: var(--antenna-border);
+  color: var(--antenna-muted);
+}
+body.light #site-list-panel,
+body.light #detail-panel,
+body.light #tile-overlay-panel,
+body.light #settings-modal {
+  background: var(--antenna-panel);
+  border-color: var(--antenna-border);
+}
+body.light #site-list,
+body.light #detail-content,
+body.light #tile-overlay-body {
+  background: var(--antenna-bg);
+}
+body.light .site-item {
+  border-color: var(--antenna-border);
+}
+body.light .site-item:hover,
+body.light .site-item.active {
+  background: var(--antenna-panel-soft);
+}
+body.light .site-item.active {
+  border-left-color: var(--antenna-accent);
+}
+body.light .site-label,
+body.light .row-label,
+body.light #detail-title,
+body.light #tile-overlay-title,
+body.light .image-group-header,
+body.light .info-value,
+body.light #settings-modal-header {
+  color: var(--antenna-text);
+}
+body.light .site-meta,
+body.light .row-meta,
+body.light .row-time,
+body.light .row-selector-label,
+body.light .info-label,
+body.light .snippet-label,
+body.light .tile-snippet,
+body.light .tile-domain,
+body.light .shortcut kbd,
+body.light #check-loader-header,
+body.light .settings-hint,
+body.light #settings-modal-body label {
+  color: var(--antenna-muted);
+}
+body.light #url-input,
+body.light .cloud-input,
+body.light .selector-input,
+body.light .tags-input,
+body.light .ignore-selector-input,
+body.light .ignore-text-input,
+body.light .snippet-box,
+body.light .snippet-box.diff,
+body.light .selector-preset-dropdown,
+body.light .monitor-test-result {
+  background: var(--antenna-bg);
+  border-color: var(--antenna-border);
+  color: var(--antenna-text);
+}
+body.light #url-input:focus,
+body.light .cloud-input:focus,
+body.light .selector-input:focus,
+body.light .tags-input:focus,
+body.light .ignore-selector-input:focus,
+body.light .ignore-text-input:focus {
+  border-color: var(--antenna-accent);
+}
+body.light #url-input::placeholder,
+body.light .cloud-input::placeholder,
+body.light .selector-input::placeholder,
+body.light .tags-input::placeholder,
+body.light .ignore-selector-input::placeholder,
+body.light .ignore-text-input::placeholder {
+  color: var(--antenna-muted);
+}
+body.light #add-btn,
+body.light .header-btn,
+body.light #expand-all-btn,
+body.light #pin-filter-btn,
+body.light #view-toggle-btn,
+body.light #image-mode-btn,
+body.light .tag-filter-btn,
+body.light .row-check-btn,
+body.light #check-single-btn,
+body.light .monitor-test-btn,
+body.light #tile-overlay-check-btn,
+body.light #tile-overlay-pin-btn,
+body.light #image-lightbox-prev,
+body.light #image-lightbox-next,
+body.light #settings-save-btn,
+body.light #cloud-sync-now-btn {
+  background: transparent;
+  border-color: var(--antenna-border);
+  color: var(--antenna-muted);
+}
+body.light #settings-theme-toggle-btn {
+  background: transparent;
+  border-color: var(--antenna-border);
+  color: var(--antenna-muted);
+}
+body.light #tile-overlay-check-btn,
+body.light #tile-overlay-pin-btn {
+  background: transparent !important;
+  border-color: var(--antenna-border) !important;
+  color: var(--antenna-muted) !important;
+}
+body.light #add-btn:hover,
+body.light .header-btn:hover,
+body.light #expand-all-btn:hover,
+body.light #pin-filter-btn:hover,
+body.light #view-toggle-btn:hover,
+body.light #image-mode-btn:hover,
+body.light .tag-filter-btn:hover,
+body.light .row-check-btn:hover,
+body.light #check-single-btn:hover,
+body.light .monitor-test-btn:hover,
+body.light #tile-overlay-check-btn:hover,
+body.light #tile-overlay-pin-btn:hover,
+body.light #image-lightbox-prev:hover,
+body.light #image-lightbox-next:hover,
+body.light #settings-save-btn:hover,
+body.light #cloud-sync-now-btn:hover {
+  background: var(--antenna-panel-soft);
+  border-color: var(--antenna-accent);
+  color: var(--antenna-text);
+}
+body.light #settings-theme-toggle-btn:hover {
+  background: var(--antenna-accent-soft);
+  border-color: var(--antenna-accent);
+  color: var(--antenna-accent);
+}
+body.light #cloud-sync-now-btn {
+  background: transparent;
+  border-color: var(--antenna-border);
+  color: var(--antenna-muted);
+}
+body.light #cloud-sync-now-btn:hover {
+  background: var(--antenna-panel-soft);
+  border-color: var(--antenna-accent);
+  color: var(--antenna-text);
+}
+body.light #settings-save-btn {
+  background: var(--antenna-accent);
+  border-color: var(--antenna-accent);
+  color: #fff;
+}
+body.light #settings-save-btn:hover {
+  background: #526792;
+  border-color: #526792;
+  color: #fff;
+}
+body.light #tile-overlay-check-btn:hover,
+body.light #tile-overlay-pin-btn:hover {
+  background: var(--antenna-panel-soft) !important;
+  border-color: var(--antenna-accent) !important;
+  color: var(--antenna-text) !important;
+}
+body.light #expand-all-btn.active,
+body.light #pin-filter-btn.active,
+body.light #view-toggle-btn.active,
+body.light #image-mode-btn.active,
+body.light .tag-filter-btn.active {
+  background: var(--antenna-accent-soft);
+  border-color: var(--antenna-accent);
+  color: var(--antenna-accent);
+}
+body.light button[data-tooltip]::after {
+  background: color-mix(in srgb, var(--antenna-text) 92%, var(--antenna-bg));
+  border-color: var(--antenna-border);
+  color: var(--antenna-bg);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+}
+body.light button[data-tooltip]::before {
+  background: color-mix(in srgb, var(--antenna-text) 92%, var(--antenna-bg));
+  border-color: var(--antenna-border);
+}
+body.light .row-pin-btn,
+body.light .tile-pin-btn {
+  background: transparent;
+  border-color: #C5CCE0;
+  color: #8890aa;
+  filter: grayscale(1);
+  opacity: 0.56;
+}
+body.light .row-pin-btn:hover,
+body.light .tile-pin-btn:hover {
+  background: transparent;
+  border-color: #B8C2D8;
+  color: #4a6090;
+  filter: grayscale(0.35);
+  opacity: 0.82;
+}
+body.light .row-pin-btn.pinned,
+body.light .tile-pin-btn.pinned,
+body.light #tile-overlay-pin-btn.pinned {
+  background: #e9456018 !important;
+  border-color: #e94560cc !important;
+  color: #e94560 !important;
+  filter: none;
+  opacity: 1;
+  box-shadow: none;
+}
+body.light .row-delete-btn,
+body.light #delete-site-btn,
+body.light #detail-close-btn,
+body.light #settings-close-btn,
+body.light #image-lightbox-close,
+body.light .image-reload-btn {
+  background: transparent;
+  border-color: transparent;
+  color: var(--antenna-muted);
+}
+body.light .row-delete-btn:hover,
+body.light #delete-site-btn:hover,
+body.light #detail-close-btn:hover,
+body.light #settings-close-btn:hover,
+body.light #image-lightbox-close:hover,
+body.light .image-reload-btn:hover {
+  background: var(--antenna-panel-soft);
+  border-color: #e94560;
+  color: #e94560;
+}
+body.light .row-open-btn,
+body.light #detail-open-btn,
+body.light .tile-open-btn,
+body.light #tile-overlay-open-btn,
+body.light #image-lightbox-link,
+body.light .image-group-header a,
+body.light .info-value a {
+  color: var(--antenna-link) !important;
+}
+body.light .row-open-btn:hover,
+body.light #detail-open-btn:hover,
+body.light .tile-open-btn:hover,
+body.light #tile-overlay-open-btn:hover,
+body.light #image-lightbox-link:hover,
+body.light .image-group-header a:hover,
+body.light .info-value a:hover {
+  color: #e94560 !important;
+}
+body.light #main.tile-mode .site-item,
+body.light .image-card,
+body.light .site-tag,
+body.light .active-tag-badge {
+  background: var(--antenna-panel);
+  border-color: var(--antenna-border);
+}
+body.light #main.tile-mode .site-item:hover,
+body.light .image-card:hover,
+body.light .site-tag:hover {
+  background: var(--antenna-panel-soft);
+  border-color: var(--antenna-accent);
+}
+body.light .site-tag {
+  color: var(--antenna-link);
+}
+body.light .badge-unchecked {
+  background: var(--antenna-accent-soft);
+  color: var(--antenna-link);
+  border-color: color-mix(in srgb, var(--antenna-link) 35%, var(--antenna-border));
+}
+body.light .badge-error {
+  background: #f7e1df;
+  color: #9a3d32;
+  border-color: #e1b5ae;
+}
+body.light #check-loader {
+  background: color-mix(in srgb, var(--antenna-panel) 96%, transparent);
+  border-color: var(--antenna-border);
+  box-shadow: 0 4px 20px rgba(42,39,35,0.12);
+}
+body.light .check-dot,
+body.light .loader-dot {
+  background: var(--antenna-border);
+}
+body.light .spinner {
+  border-color: var(--antenna-border);
+  border-top-color: var(--antenna-accent);
+}
+body.light ::-webkit-scrollbar-track { background: var(--antenna-panel-soft); }
+body.light ::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--antenna-muted) 55%, var(--antenna-border)); }
+body.light ::-webkit-scrollbar-thumb:hover { background: var(--antenna-muted); }
+
+/* ---- Tag filter bar ---- */
+#tag-filter-bar {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  gap: 4px;
+  padding: 4px 8px;
+  border-bottom: 0.5px solid #1a3a6e;
+  flex-shrink: 0;
+  scrollbar-width: none;
+}
+#tag-filter-bar::-webkit-scrollbar { display: none; }
+.tag-filter-btn {
+  background: transparent;
+  border: 1px solid #1a3a6e;
+  border-radius: 20px;
+  color: #7a8ba0;
+  font-size: 11px;
+  padding: 2px 9px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+.tag-filter-btn:hover { color: #c8d6e5; border-color: #3a5a8a; }
+.tag-filter-btn.active { color: #e94560; border-color: #e94560; background: #1a1a2e; }
+
+/* ---- Site tag pills ---- */
+.site-tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-top: 3px;
+}
+.site-tag {
+  background: #0f2a50;
+  border: 1px solid #1a4a7a;
+  border-radius: 3px;
+  color: #5a9ad4;
+  font-size: 10px;
+  padding: 1px 5px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.site-tag:hover { border-color: #e94560; color: #e94560; }
+
+/* ---- Title glitch (dark mode, hover only) ---- */
+@keyframes ant-glitch1 {
+  0%  { clip-path: inset(5% 0 88% 0);  transform: translate(-5px, 0); }
+  8%  { clip-path: inset(62% 0 12% 0); transform: translate(4px, 0); }
+  16% { clip-path: inset(30% 0 55% 0); transform: translate(-2px, 0); }
+  24% { clip-path: inset(78% 0 5% 0);  transform: translate(6px, 0); }
+  32% { clip-path: inset(18% 0 70% 0); transform: translate(-4px, 0); }
+  40% { clip-path: inset(45% 0 38% 0); transform: translate(3px, 0); }
+  48% { clip-path: inset(88% 0 2% 0);  transform: translate(-6px, 0); }
+  56% { clip-path: inset(12% 0 80% 0); transform: translate(5px, 0); }
+  64% { clip-path: inset(55% 0 22% 0); transform: translate(-3px, 0); }
+  72% { clip-path: inset(35% 0 48% 0); transform: translate(4px, 0); }
+  80% { clip-path: inset(70% 0 18% 0); transform: translate(-5px, 0); }
+  88% { clip-path: inset(22% 0 65% 0); transform: translate(2px, 0); }
+  100%{ clip-path: inset(5% 0 88% 0);  transform: translate(-5px, 0); }
+}
+@keyframes ant-glitch2 {
+  0%  { clip-path: inset(75% 0 8% 0);  transform: translate(5px, 0); }
+  10% { clip-path: inset(10% 0 75% 0); transform: translate(-4px, 0); }
+  20% { clip-path: inset(48% 0 32% 0); transform: translate(6px, 0); }
+  30% { clip-path: inset(82% 0 4% 0);  transform: translate(-3px, 0); }
+  40% { clip-path: inset(25% 0 58% 0); transform: translate(5px, 0); }
+  50% { clip-path: inset(60% 0 20% 0); transform: translate(-6px, 0); }
+  60% { clip-path: inset(3% 0 90% 0);  transform: translate(3px, 0); }
+  70% { clip-path: inset(38% 0 44% 0); transform: translate(-5px, 0); }
+  80% { clip-path: inset(68% 0 15% 0); transform: translate(4px, 0); }
+  90% { clip-path: inset(15% 0 72% 0); transform: translate(-2px, 0); }
+  100%{ clip-path: inset(75% 0 8% 0);  transform: translate(5px, 0); }
+}
+body:not(.light) #logo { position: relative; }
+body:not(.light) #logo::before,
+body:not(.light) #logo::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0; left: 0;
+  font-size: inherit;
+  font-weight: inherit;
+  white-space: nowrap;
+  clip-path: inset(50% 0 50% 0);
+}
+body:not(.light) #logo:hover::before {
+  color: #00c8ff;
+  animation: ant-glitch1 0.6s steps(1) infinite;
+  animation-delay: -0.16s;
+}
+body:not(.light) #logo:hover::after {
+  color: #f0c040;
+  animation: ant-glitch2 0.6s steps(1) infinite;
+  animation-delay: -0.4s;
+}
+
+@media (max-width: 760px) {
+  body {
+    height: var(--app-height, 100dvh);
+    overflow: hidden;
+  }
+  #header {
+    padding: 8px 10px;
+    gap: 7px;
+    flex-wrap: wrap;
+  }
+  #logo {
+    font-size: 16px;
+    order: 1;
+  }
+  #loading-spinner {
+    order: 2;
+  }
+  #cloud-status {
+    order: 3;
+    margin-left: auto;
+    max-width: 42vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  #mobile-url-toggle-btn {
+    order: 4;
+    display: inline-flex;
+    width: 42px;
+    height: 30px;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  #settings-btn {
+    order: 5;
+  }
+  #url-input-wrapper {
+    order: 10;
+    display: none;
+    flex: 0 0 100%;
+    max-width: none;
+  }
+  body.mobile-url-open #url-input-wrapper {
+    display: block;
+  }
+  #export-btn,
+  #import-btn,
+  #view-toggle-btn {
+    display: none !important;
+  }
+  #main {
+    position: relative;
+  }
+  #site-list-panel {
+    flex: 1 0 100%;
+    width: 100%;
+  }
+  #site-list-header {
+    padding: 6px 10px;
+    min-height: 38px;
+  }
+  #site-count {
+    margin-left: auto;
+  }
+  #expand-all-btn {
+    display: none;
+  }
+  #site-list {
+    padding-bottom: 10px;
+    overscroll-behavior: contain;
+  }
+  .site-item {
+    padding: 11px 10px;
+    gap: 5px;
+  }
+  .site-item.active {
+    border-left-width: 3px;
+    padding-left: 7px;
+  }
+  .row-header {
+    align-items: flex-start;
+    gap: 7px;
+  }
+  .row-title-group {
+    align-items: flex-start;
+  }
+  .row-label {
+    white-space: normal;
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+  .row-actions {
+    gap: 3px;
+    margin-left: 0;
+  }
+  .row-time,
+  .row-delete-btn {
+    display: none;
+  }
+  .row-meta {
+    padding-left: 23px;
+  }
+  .row-detail {
+    display: none !important;
+  }
+  #detail-panel {
+    display: flex;
+    position: absolute;
+    inset: 0;
+    z-index: 60;
+    flex-direction: column;
+    background: #0d1b2e;
+    transform: translateX(100%);
+    transition: transform 0.18s ease;
+  }
+  body.mobile-detail-open #detail-panel {
+    transform: translateX(0);
+  }
+  body.mobile-detail-open #site-list-panel {
+    pointer-events: none;
+  }
+  #detail-header {
+    height: 42px;
+    padding: 0 10px;
+    gap: 7px;
+  }
+  #mobile-detail-back-btn {
+    display: inline-flex;
+  }
+  #detail-title {
+    font-size: 13px;
+  }
+  #detail-content {
+    padding: 14px 12px 24px;
+    overscroll-behavior: contain;
+  }
+  .info-row,
+  .row-selector-row {
+    flex-direction: column;
+    gap: 5px;
+  }
+  .info-label,
+  .row-selector-label {
+    width: auto;
+  }
+  .snippet-box,
+  .diff-line {
+    font-size: 11px;
+  }
+  #main.tile-mode #site-list {
+    display: block;
+    padding: 4px 0 10px;
+  }
+  #settings-overlay {
+    align-items: stretch;
+    padding: 10px;
+  }
+  #settings-modal {
+    width: 100%;
+    max-width: none;
+    max-height: calc(100dvh - 20px);
+  }
+  #settings-modal-body {
+    max-height: calc(100dvh - 128px - env(safe-area-inset-bottom));
+    overflow-y: auto;
+  }
+  #settings-modal-footer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: stretch;
+    padding: 12px 16px max(12px, env(safe-area-inset-bottom));
+  }
+  #cloud-sync-now-btn,
+  #settings-save-btn {
+    flex: 1;
+    min-width: 68px;
+    height: 44px;
+    padding: 0 18px;
+  }
+  #shortcuts {
+    display: none;
+  }
+  #statusbar {
+    min-height: 22px;
+  }
+  .image-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  #image-lightbox-img {
+    max-width: 94vw;
+    max-height: 76vh;
+  }
+}
+
+@media (max-width: 760px) and (orientation: portrait) {
+  @supports (padding: max(0px)) {
+    body.standalone-app {
+      padding-top: env(safe-area-inset-top);
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+    }
+  }
+}
+
+@media (display-mode: standalone) and (max-width: 760px) and (orientation: portrait) {
+  @supports (padding: max(0px)) {
+    body {
+      padding-top: env(safe-area-inset-top);
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+    }
+  }
+}
+
+@media (max-height: 520px) and (max-width: 980px) and (orientation: landscape) {
+  body {
+    height: var(--app-height, 100dvh);
+  }
+  @supports (padding: max(0px)) {
+    body {
+      padding-top: 0;
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+    }
+  }
+}
+
+@media (min-width: 761px) {
+  body.light #logo {
+    color: #64779f;
+  }
+  body.light #logo:hover #site-refresh-mark {
+    color: #64779f;
+  }
+  #mobile-detail-back-btn {
+    display: none;
+  }
+}
+
+</style>
+</head>
+<body>
+
+<!-- テーマ即時適用（フラッシュ防止） -->
+<script>
+(function() {
+  const t = localStorage.getItem('antenna-theme');
+  if (t === 'light') document.body.classList.add('light');
+  const isStandalone = window.matchMedia?.('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  document.body.classList.toggle('standalone-app', isStandalone);
+})();
+</script>
+
+<div id="header">
+  <span id="logo" data-text="Web Antenna" title="全サイトを確認 (r)">Web Antenna <span id="site-refresh-mark" aria-hidden="true">⟳</span></span>
+  <span id="loading-spinner" class="spinner" style="display:none;"></span>
+  <span id="cloud-status">local</span>
+  <button class="header-btn" id="mobile-url-toggle-btn" data-tooltip="URL追加" aria-label="URL入力欄を開く">URL</button>
+  <div id="url-input-wrapper">
+    <input id="url-input" type="text" placeholder="URLを入力 (例: https://example.com)">
+    <button id="add-btn">add</button>
+  </div>
+  <button class="header-btn" id="export-btn">export</button>
+  <button class="header-btn" id="import-btn">import</button>
+  <button class="header-btn" id="settings-btn" data-tooltip="設定" aria-label="設定">⚙</button>
+  <input type="file" id="import-file" accept=".json" style="display:none">
+</div>
+
+<div id="main">
+  <div id="site-list-panel">
+    <div id="site-list-header">
+      <span>監視サイト</span>
+      <span id="site-count"></span>
+      <button id="expand-all-btn" data-tooltip="全行を展開 / 折りたたむ" aria-label="全行を展開または折りたたむ">⊟</button>
+      <button id="pin-filter-btn" class="view-mode-btn" data-tooltip="ピン済み" aria-label="ピン済みのみ表示">📍</button>
+      <button id="view-toggle-btn" class="view-mode-btn" data-tooltip="タイル表示" aria-label="タイル表示">⊞</button>
+      <button id="image-mode-btn" class="view-mode-btn" data-tooltip="画像モード" data-tooltip-align="right" aria-label="画像モード">🖼</button>
+    </div>
+    <div id="tag-filter-bar" style="display:none"></div>
+    <div id="site-list"></div>
+  </div>
+
+  <div id="resizer"></div>
+
+  <div id="detail-panel">
+    <div id="detail-header">
+      <button id="mobile-detail-back-btn" class="row-check-btn" data-tooltip="一覧へ戻る" aria-label="一覧へ戻る">←</button>
+      <span id="detail-title">—</span>
+      <a id="detail-open-btn" href="#" target="_blank" rel="noopener noreferrer">↗ 開く</a>
+      <button id="check-single-btn" data-tooltip="確認" aria-label="このサイトを確認">⟳</button>
+      <button id="delete-site-btn" data-tooltip="削除" aria-label="このサイトを削除">✕</button>
+    </div>
+    <div id="detail-content">
+      <div id="detail-empty">サイトを選択するか、URLを追加してください</div>
+    </div>
+  </div>
+</div>
+
+<div id="tile-overlay">
+  <div id="tile-overlay-panel">
+    <div id="tile-overlay-header">
+      <span id="tile-overlay-title"></span>
+      <a id="tile-overlay-open-btn" href="#" target="_blank" rel="noopener noreferrer" style="color:#7a8ba0;text-decoration:none;font-size:11px;white-space:nowrap">↗ 開く</a>
+      <button id="tile-overlay-pin-btn" data-tooltip="ピンを立てる" aria-label="ピンを立てる" style="background:none;border:1px solid #1a3a6e;border-radius:4px;color:#7a8ba0;font-size:15px;width:26px;height:26px;padding:0;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;"></button>
+      <button id="tile-overlay-check-btn" data-tooltip="確認" aria-label="このサイトを確認" style="background:none;border:1px solid #1a3a6e;border-radius:4px;color:#7a8ba0;font-size:15px;width:26px;height:26px;padding:0;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;">⟳</button>
+      <button id="detail-close-btn" data-tooltip="閉じる" aria-label="閉じる">✕</button>
+    </div>
+    <div id="tile-overlay-body"></div>
+  </div>
+</div>
+
+<div id="image-lightbox">
+  <div id="image-lightbox-panel">
+    <button id="image-lightbox-close" data-tooltip="閉じる" aria-label="閉じる">✕</button>
+    <button id="image-lightbox-prev" data-tooltip="前の画像" aria-label="前の画像">‹</button>
+    <img id="image-lightbox-img" src="" alt="">
+    <button id="image-lightbox-next" data-tooltip="次の画像" aria-label="次の画像">›</button>
+    <div id="image-lightbox-footer">
+      <img id="image-lightbox-favicon" class="favicon" src="" alt="" onerror="this.style.display='none'">
+      <span id="image-lightbox-label"></span>
+      <a id="image-lightbox-link" href="#" target="_blank" rel="noopener noreferrer">↗ 開く</a>
+    </div>
+  </div>
+</div>
+
+<div id="check-loader">
+  <div id="check-loader-dots">
+    <div class="check-dot" id="check-dot-0"></div>
+    <div class="check-dot" id="check-dot-1"></div>
+    <div class="check-dot" id="check-dot-2"></div>
+    <div class="check-dot" id="check-dot-3"></div>
+    <div class="check-dot" id="check-dot-4"></div>
+  </div>
+  <div id="check-loader-count">0 / 0</div>
+</div>
+
+<div id="statusbar"></div>
+<div id="status"></div>
+
+<div id="settings-overlay" style="display:none">
+  <div id="settings-modal">
+    <div id="settings-modal-header">
+      <span>設定</span>
+      <button id="settings-close-btn" data-tooltip="閉じる" aria-label="閉じる">✕</button>
+    </div>
+    <div id="settings-modal-body">
+      <div class="settings-section">
+        <div class="settings-section-title">表示設定</div>
+        <div class="settings-row settings-inline-row">
+          <span class="settings-row-label">表示テーマ</span>
+          <button id="settings-theme-toggle-btn" type="button" data-tooltip="テーマを切り替え" aria-label="ライト / ダークモード切替">ライト</button>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-title">取得設定</div>
+        <label for="custom-proxy-input">カスタムCORSプロキシ URL（省略可）</label>
+        <input type="url" id="custom-proxy-input" placeholder="例: http://localhost:8080/" />
+        <div class="settings-hint">設定時は公開プロキシを使わずこのURLにリクエストを転送します<br>空欄のままにすると従来どおり公開プロキシ（allorigins.win 等）を使用</div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-title">Cloud設定</div>
+        <div class="settings-row">
+          <label for="cloud-supabase-url-input">Supabase URL</label>
+          <input class="cloud-input" type="url" id="cloud-supabase-url-input" placeholder="https://xxxxx.supabase.co" autocomplete="off">
+        </div>
+        <div class="settings-row">
+          <label for="cloud-supabase-key-input">anon key</label>
+          <input class="cloud-input" type="password" id="cloud-supabase-key-input" placeholder="eyJhbGciOi..." autocomplete="off">
+        </div>
+        <div class="settings-row">
+          <label for="cloud-profile-id-input">共有ID</label>
+          <input class="cloud-input" type="text" id="cloud-profile-id-input" placeholder="例: private-antenna" autocomplete="off">
+        </div>
+        <div class="settings-hint">同じSupabase設定と共有IDを入力した端末間で、監視サイトと確認結果を同期します。</div>
+      </div>
+    </div>
+    <div id="settings-modal-footer">
+      <button id="cloud-sync-now-btn" type="button" data-tooltip="今すぐ同期" aria-label="Supabaseと同期">同期</button>
+      <button id="settings-save-btn" type="button" data-tooltip="保存" aria-label="設定を保存">保存</button>
+    </div>
+  </div>
+</div>
+
+<div id="shortcuts">
+  <span class="shortcut"><kbd>j</kbd> 次</span>
+  <span class="shortcut"><kbd>k</kbd> 前</span>
+  <span class="shortcut"><kbd>o</kbd> 開く</span>
+  <span class="shortcut"><kbd>r</kbd> 全確認</span>
+  <span class="shortcut"><kbd>t</kbd> タイル切替</span>
+  <span class="shortcut"><kbd>e</kbd> 全展開</span>
+  <button id="theme-btn" data-tooltip="テーマ" data-tooltip-pos="top" aria-label="ライト / ダークモード切替"></button>
+</div>
+
+<script>
+const APP_VERSION = '2026-06-02.review-hardening';
+const CLOUD_STORAGE_KEY = 'antenna-cloud-config';
+const DEFAULT_CLOUD_PROFILE_ID = 'private-antenna';
+
+function updateAppViewportHeight() {
+  const viewportHeight = window.visualViewport?.height || window.innerHeight;
+  document.documentElement.style.setProperty('--app-height', `${viewportHeight}px`);
+}
+
+function updateStandaloneDisplayMode() {
+  const isStandalone = window.matchMedia?.('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  document.body.classList.toggle('standalone-app', isStandalone);
+}
+
+function bindAppViewportHeight() {
+  updateStandaloneDisplayMode();
+  updateAppViewportHeight();
+  window.addEventListener('resize', updateAppViewportHeight);
+  window.addEventListener('orientationchange', () => {
+    updateStandaloneDisplayMode();
+    updateAppViewportHeight();
+    setTimeout(updateAppViewportHeight, 250);
+  });
+  window.visualViewport?.addEventListener('resize', updateAppViewportHeight);
+  const standaloneMedia = window.matchMedia?.('(display-mode: standalone)');
+  if (standaloneMedia?.addEventListener) {
+    standaloneMedia.addEventListener('change', updateStandaloneDisplayMode);
+  } else if (standaloneMedia?.addListener) {
+    standaloneMedia.addListener(updateStandaloneDisplayMode);
+  }
+}
+
+bindAppViewportHeight();
+
+// ============================================================
+// Theme
+// ============================================================
+let currentTheme = localStorage.getItem('antenna-theme') || 'dark';
+
+function updateDocumentBackground() {
+  document.documentElement.style.background = currentTheme === 'light' ? '#EEF1F8' : '#0d1b2e';
+}
+
+function updateThemeControls() {
+  const themeBtn = document.getElementById('theme-btn');
+  const settingsBtn = document.getElementById('settings-theme-toggle-btn');
+  if (themeBtn) themeBtn.style.background = currentTheme === 'dark' ? '#EEF1F8' : '#1a1a2e';
+  if (settingsBtn) {
+    const label = currentTheme === 'light' ? 'ライト' : 'ダーク';
+    const nextLabel = currentTheme === 'light' ? 'ダーク' : 'ライト';
+    const help = `${nextLabel}モードに切り替え`;
+    settingsBtn.textContent = label;
+    settingsBtn.setAttribute('aria-label', help);
+    settingsBtn.dataset.tooltip = help;
+  }
+}
+
+function toggleTheme() {
+  currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+  document.body.classList.toggle('light', currentTheme === 'light');
+  try { localStorage.setItem('antenna-theme', currentTheme); } catch {}
+  updateDocumentBackground();
+  updateThemeControls();
+}
+
+updateDocumentBackground();
+updateThemeControls();
+document.getElementById('theme-btn').addEventListener('click', toggleTheme);
+
+// ============================================================
+// Custom proxy
+// ============================================================
+let customProxyUrl = localStorage.getItem('antenna-custom-proxy') || '';
+
+// ============================================================
+// Charset detection & decoding
+// ============================================================
+function detectCharset(buffer) {
+  // 先頭 2KB を latin-1 で読み、charset 宣言を探す（ASCII 互換のため安全）
+  const head = new TextDecoder('latin1').decode(new Uint8Array(buffer, 0, Math.min(buffer.byteLength, 2048)));
+  const m = head.match(/charset\s*=\s*["']?\s*([\w-]+)/i);
+  if (!m) return 'utf-8';
+  const raw = m[1].toLowerCase().replace(/\s/g, '');
+  // Shift-JIS の各種別名を正規化
+  if (['shift_jis','shift-jis','sjis','x-sjis','ms932','windows-31j','cp932'].includes(raw)) return 'shift_jis';
+  if (['euc-jp','euc_jp','x-euc-jp'].includes(raw)) return 'euc-jp';
+  return raw;
+}
+
+function decodeBuffer(buffer) {
+  const charset = detectCharset(buffer);
+  try {
+    return new TextDecoder(charset).decode(buffer);
+  } catch {
+    return new TextDecoder('utf-8').decode(buffer);
+  }
+}
+
+// ============================================================
+// CORS proxy strategies
+// ============================================================
+const CORS_PROXIES = [
+  {
+    name: 'allorigins-raw',
+    buildUrl: url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+    extract: async resp => decodeBuffer(await resp.arrayBuffer()),
+  },
+  {
+    name: 'allorigins-json',
+    buildUrl: url => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+    extract: async resp => {
+      const json = await resp.json();
+      if (!json.contents) throw new Error('allorigins returned null contents');
+      return json.contents;
+    },
+  },
+  {
+    name: 'codetabs',
+    buildUrl: url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+    extract: async resp => decodeBuffer(await resp.arrayBuffer()),
+  },
+  {
+    name: 'corsproxy',
+    buildUrl: url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+    extract: async resp => decodeBuffer(await resp.arrayBuffer()),
+  },
+];
+
+function safeLoadJson(key, fallback) {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return fallback;
+    return JSON.parse(raw);
+  } catch {
+    return fallback;
+  }
+}
+
+function normalizeText(value, fallback = '') {
+  return typeof value === 'string' ? value : fallback;
+}
+
+function sanitizeHttpUrl(value) {
+  if (typeof value !== 'string' || value.length > 2048) return null;
+  try {
+    const url = new URL(value.trim());
+    return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : null;
+  } catch {
+    return null;
+  }
+}
+
+function normalizeDate(value) {
+  if (!value) return null;
+  const date = value instanceof Date ? value : new Date(value);
+  return isNaN(date.getTime()) ? null : date;
+}
+
+function normalizeSite(item) {
+  if (!item || typeof item !== 'object') return null;
+  const url = sanitizeHttpUrl(item.url);
+  if (!url) return null;
+  return {
+    url,
+    label: normalizeText(item.label),
+    selector: normalizeText(item.selector),
+    ignoreSelector: normalizeText(item.ignoreSelector),
+    ignoreTextPattern: normalizeText(item.ignoreTextPattern),
+    tags: Array.isArray(item.tags)
+      ? item.tags.map(t => String(t).trim()).filter(Boolean)
+      : [],
+    pinned: item.pinned === true,
+    addedAt: normalizeDate(item.addedAt) || new Date(),
+    lastCheckedAt: normalizeDate(item.lastCheckedAt),
+    lastChangedAt: normalizeDate(item.lastChangedAt),
+    prevText: normalizeText(item.prevText) || null,
+    prevHash: normalizeText(item.prevHash) || null,
+    snippet: normalizeText(item.snippet) || null,
+    snippetDiff: Array.isArray(item.snippetDiff)
+      ? item.snippetDiff
+          .filter(line => line && typeof line === 'object' && ['add', 'del', 'ctx', 'skip'].includes(line.type))
+          .map(line => ({ type: line.type, text: normalizeText(line.text) }))
+      : null,
+    status: item.status === 'checking'
+      ? (item.prevHash ? 'ok' : 'unchecked')
+      : (['unchecked', 'ok', 'error'].includes(item.status) ? item.status : 'unchecked'),
+    errorMsg: normalizeText(item.errorMsg) || null,
+    updatedAt: normalizeDate(item.updatedAt) || normalizeDate(item.updated_at) || normalizeDate(item.addedAt) || new Date(),
+  };
+}
+
+let proxyCache = safeLoadJson('antenna-proxy-cache', {});
+if (!proxyCache || typeof proxyCache !== 'object' || Array.isArray(proxyCache)) proxyCache = {};
+function saveProxyCache() {
+  try { localStorage.setItem('antenna-proxy-cache', JSON.stringify(proxyCache)); } catch {}
+}
+
+const rateLimitedProxies = new Set();
+
+async function fetchPage(siteUrl) {
+  if (customProxyUrl) {
+    const resp = await fetch(customProxyUrl + siteUrl, {
+      signal: AbortSignal.timeout(12000),
+      cache: 'no-store',
+    });
+    if (resp.status === 429) throw new Error('カスタムプロキシがレート制限中です (429)');
+    if (!resp.ok) throw new Error(`カスタムプロキシ HTTP ${resp.status}`);
+    return decodeBuffer(await resp.arrayBuffer());
+  }
+
+  const tryProxy = async proxy => {
+    const resp = await fetch(proxy.buildUrl(siteUrl), {
+      signal: AbortSignal.timeout(12000),
+      cache: 'no-store',
+    });
+    if (resp.status === 429) {
+      rateLimitedProxies.add(proxy.name);
+      throw new Error('rate limited');
+    }
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const text = await proxy.extract(resp);
+    if (!text || text.trim() === '') throw new Error('empty response');
+    return { text, name: proxy.name };
+  };
+
+  const cachedName = proxyCache[siteUrl];
+  if (cachedName && !rateLimitedProxies.has(cachedName)) {
+    const cached = CORS_PROXIES.find(p => p.name === cachedName);
+    if (cached) {
+      try {
+        const { text } = await tryProxy(cached);
+        return text;
+      } catch {
+        delete proxyCache[siteUrl];
+        saveProxyCache();
+      }
+    }
+  }
+
+  const active = CORS_PROXIES.filter(p => !rateLimitedProxies.has(p.name));
+  if (active.length === 0) throw new Error('すべてのプロキシがレート制限中です');
+
+  const { text, name } = await Promise.any(active.map(p => tryProxy(p))).catch(() => {
+    throw new Error('すべての取得方法が失敗しました');
+  });
+  proxyCache[siteUrl] = name;
+  saveProxyCache();
+  return text;
+}
+
+// ============================================================
+// Content extraction
+// ============================================================
+function removeNonVisibleAndChrome(root) {
+  if (!root) return;
+
+  const removeSelectors = [
+    'script', 'style', 'noscript', 'iframe', 'svg', 'template',
+    'nav', 'footer', 'header', 'aside', 'form',
+    '[hidden]', '[aria-hidden="true"]',
+    '[style*="display:none" i]', '[style*="display: none" i]',
+    '[style*="visibility:hidden" i]', '[style*="visibility: hidden" i]',
+    '[style*="opacity:0" i]', '[style*="opacity: 0" i]',
+    '.hide', '.hidden', '.sr-only', '.visually-hidden', '.screen-reader-text',
+    '#header', '#sp_header', '#header2', '#top_search', '#header_fixed_div',
+    '#footer', '#page_top', '#pagetop', '#fb-root', '#xp1',
+    '[role="navigation"]', '[role="banner"]', '[role="contentinfo"]', '[role="complementary"]',
+  ];
+
+  for (const sel of removeSelectors) {
+    try { root.querySelectorAll(sel).forEach(el => el.remove()); } catch {}
+  }
+
+  try {
+    root.querySelectorAll('*').forEach(el => {
+      const classText = String(el.getAttribute('class') || '');
+      if (/(^|\s)(hide|hidden|sr-only|visually-hidden|screen-reader-text)(\s|$)/i.test(classText)) {
+        el.remove();
+        return;
+      }
+      const style = String(el.getAttribute('style') || '').replace(/\s+/g, '').toLowerCase();
+      if (style.includes('display:none') || style.includes('visibility:hidden') || style.includes('opacity:0')) {
+        el.remove();
+      }
+    });
+  } catch {}
+}
+
+function extractPageContent(html, selector, ignoreSelector, ignoreTextPattern) {
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+
+  const title = doc.title?.trim() || doc.querySelector('h1')?.textContent?.trim() || '';
+  removeNonVisibleAndChrome(doc);
+
+  let root = doc.body;
+  if (selector) {
+    try {
+      const el = doc.querySelector(selector);
+      if (el) root = el;
+    } catch {} // 無効なセレクタはフォールバック
+  }
+
+  removeNonVisibleAndChrome(root);
+
+  if (ignoreSelector && root) {
+    try {
+      root.querySelectorAll(ignoreSelector).forEach(el => el.remove());
+    } catch {} // 無効な除外セレクタは無視
+  }
+
+  let text = (root?.textContent || '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 50000);
+
+  if (ignoreTextPattern) {
+    try {
+      text = text.replace(new RegExp(ignoreTextPattern, 'g'), '').replace(/\s+/g, ' ').trim();
+    } catch {} // 無効な正規表現は無視
+  }
+
+  return { title, text };
+}
+
+function extractPageImages(html, siteUrl, selector) {
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+
+  // og:image を最優先で取得（ノイズ除去前に head から取得）
+  const ogImage = doc.querySelector('meta[property="og:image"]')?.getAttribute('content') || null;
+
+  removeNonVisibleAndChrome(doc);
+
+  let root = doc.body;
+  if (selector) {
+    try { const el = doc.querySelector(selector); if (el) root = el; } catch {}
+  }
+
+  const seen = new Set();
+  const results = [];
+
+  const addUrl = (rawSrc) => {
+    if (!rawSrc || rawSrc.startsWith('data:')) return;
+    let abs;
+    try { abs = new URL(rawSrc, siteUrl).href; } catch { return; }
+    if (!sanitizeHttpUrl(abs)) return;
+    if (seen.has(abs)) return;
+    seen.add(abs);
+    results.push(abs);
+  };
+
+  // og:image を先頭に追加
+  if (ogImage) addUrl(ogImage);
+
+  // img 要素から収集
+  (root || doc.body).querySelectorAll('img[src]').forEach(img => {
+    const w = parseInt(img.getAttribute('width') || '0');
+    const h = parseInt(img.getAttribute('height') || '0');
+    if ((w > 0 && w < 48) || (h > 0 && h < 48)) return;
+    addUrl(img.getAttribute('src'));
+    // srcset の最後のURL（最大サイズ）も試みる
+    const srcset = img.getAttribute('srcset');
+    if (srcset) {
+      const last = srcset.split(',').map(s => s.trim().split(/\s+/)[0]).filter(Boolean).pop();
+      if (last) addUrl(last);
+    }
+  });
+
+  return results.slice(0, 20);
+}
+
+async function computeHash(text) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function findSnippet(currentText, prevText) {
+  if (!prevText || currentText === prevText) return null;
+
+  // Find the position where texts first differ
+  let pos = 0;
+  const minLen = Math.min(currentText.length, prevText.length);
+  while (pos < minLen && currentText[pos] === prevText[pos]) pos++;
+
+  // Back up to a word boundary for cleaner snippet
+  const start = Math.max(0, pos - 60);
+  const raw = currentText.slice(start, start + 280).trim();
+  return raw || currentText.slice(0, 200);
+}
+
+function diffLines(a, b) {
+  const m = a.length, n = b.length;
+  const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+  for (let i = m - 1; i >= 0; i--)
+    for (let j = n - 1; j >= 0; j--)
+      dp[i][j] = a[i] === b[j] ? dp[i+1][j+1] + 1 : Math.max(dp[i+1][j], dp[i][j+1]);
+  const result = [];
+  let i = 0, j = 0;
+  while (i < m || j < n) {
+    if (i < m && j < n && a[i] === b[j]) {
+      result.push({ type: 'ctx', text: a[i] }); i++; j++;
+    } else if (j < n && (i >= m || dp[i][j+1] > dp[i+1][j])) {
+      result.push({ type: 'add', text: b[j] }); j++;
+    } else {
+      result.push({ type: 'del', text: a[i] }); i++;
+    }
+  }
+  return result;
+}
+
+function buildDiffSnippet(currentText, prevText) {
+  if (!prevText || currentText === prevText) return null;
+  let pos = 0;
+  const minLen = Math.min(currentText.length, prevText.length);
+  while (pos < minLen && currentText[pos] === prevText[pos]) pos++;
+  const start = Math.max(0, pos - 400);
+  const oldLines = prevText.slice(start, start + 1800).split('\n').slice(0, 30);
+  const newLines = currentText.slice(start, start + 1800).split('\n').slice(0, 30);
+  return diffLines(oldLines, newLines);
+}
+
+// 文字レベルのインライン差分（del+add ペアの行内ハイライト用）
+function inlineDiff(oldStr, newStr) {
+  // 共通prefix / suffix を除去して変更箇所だけにLCSを適用
+  let preLen = 0;
+  const minLen = Math.min(oldStr.length, newStr.length);
+  while (preLen < minLen && oldStr[preLen] === newStr[preLen]) preLen++;
+
+  let sufLen = 0;
+  const maxSuf = Math.min(oldStr.length - preLen, newStr.length - preLen);
+  while (sufLen < maxSuf &&
+         oldStr[oldStr.length - 1 - sufLen] === newStr[newStr.length - 1 - sufLen]) sufLen++;
+
+  const oldMid = sufLen > 0 ? oldStr.slice(preLen, oldStr.length - sufLen) : oldStr.slice(preLen);
+  const newMid = sufLen > 0 ? newStr.slice(preLen, newStr.length - sufLen) : newStr.slice(preLen);
+
+  if (oldMid.length + newMid.length > 2000) return null; // 変更箇所が大きすぎる場合はスキップ
+
+  const raw = diffLines([...oldMid], [...newMid]);
+  // 連続する同種トークンを結合
+  const grouped = [];
+  for (const tok of raw) {
+    const last = grouped[grouped.length - 1];
+    if (last && last.type === tok.type) last.text += tok.text;
+    else grouped.push({ type: tok.type, text: tok.text });
+  }
+
+  // 前後に文脈を付与（最大60文字、超えた分は ··· で省略）
+  const CTX = 60;
+  const result = [];
+  if (preLen > 0) {
+    const pre = preLen > CTX ? '···' + oldStr.slice(preLen - CTX, preLen) : oldStr.slice(0, preLen);
+    result.push({ type: 'ctx', text: pre });
+  }
+  result.push(...grouped);
+  if (sufLen > 0) {
+    const suf = sufLen > CTX
+      ? oldStr.slice(oldStr.length - sufLen, oldStr.length - sufLen + CTX) + '···'
+      : oldStr.slice(oldStr.length - sufLen);
+    result.push({ type: 'ctx', text: suf });
+  }
+  return result;
+}
+
+function buildDiffHtml(diff) {
+  if (!diff || diff.length === 0) return '';
+  const CTX_LIMIT = 2;
+  const collapsed = [];
+  let ctxRun = 0;
+  for (const line of diff) {
+    if (line.type === 'ctx') {
+      ctxRun++;
+      if (ctxRun <= CTX_LIMIT) collapsed.push(line);
+      else if (ctxRun === CTX_LIMIT + 1) collapsed.push({ type: 'omit' });
+    } else {
+      ctxRun = 0;
+      collapsed.push(line);
+    }
+  }
+  // 先頭・末尾の ctx / omit を除去
+  while (collapsed.length && (collapsed[0].type === 'ctx' || collapsed[0].type === 'omit')) collapsed.shift();
+  while (collapsed.length && (collapsed[collapsed.length-1].type === 'ctx' || collapsed[collapsed.length-1].type === 'omit')) collapsed.pop();
+  if (collapsed.length === 0) return '';
+
+  // 連続する del/add ブロックを add → del の順に並べ替え
+  for (let i = 0; i < collapsed.length; ) {
+    if (collapsed[i].type !== 'del' && collapsed[i].type !== 'add') { i++; continue; }
+    let j = i;
+    while (j < collapsed.length && (collapsed[j].type === 'del' || collapsed[j].type === 'add')) j++;
+    const block = collapsed.slice(i, j);
+    const adds = block.filter(l => l.type === 'add');
+    const dels = block.filter(l => l.type === 'del');
+    collapsed.splice(i, j - i, ...adds, ...dels);
+    i = j;
+  }
+
+  let html = '';
+  for (let i = 0; i < collapsed.length; i++) {
+    const line = collapsed[i];
+    if (line.type === 'omit') { html += `<div class="diff-omit">· · ·</div>`; continue; }
+
+    // 隣接する add+del ペア → 文字レベルのインライン差分
+    const next = collapsed[i + 1];
+    let delText = null, addText = null;
+    if (line.type === 'add' && next && next.type === 'del') {
+      addText = line.text; delText = next.text;
+    }
+    if (delText !== null) {
+      const inline = inlineDiff(delText, addText);
+      if (inline) {
+        const delHtml = inline
+          .filter(t => t.type !== 'add')
+          .map(t => t.type === 'del' ? `<mark class="idel">${escapeHtml(t.text)}</mark>` : escapeHtml(t.text))
+          .join('');
+        const addHtml = inline
+          .filter(t => t.type !== 'del')
+          .map(t => t.type === 'add' ? `<mark class="iadd">${escapeHtml(t.text)}</mark>` : escapeHtml(t.text))
+          .join('');
+        html += `<div class="diff-line diff-add has-inline"><span class="diff-prefix">+</span><span>${addHtml || '&nbsp;'}</span></div>`;
+        html += `<div class="diff-line diff-del has-inline"><span class="diff-prefix">−</span><span>${delHtml || '&nbsp;'}</span></div>`;
+        i++;
+        continue;
+      }
+    }
+
+    // 通常レンダリング
+    const cls = line.type === 'add' ? 'diff-add' : line.type === 'del' ? 'diff-del' : 'diff-ctx';
+    const prefix = line.type === 'add' ? '+' : line.type === 'del' ? '−' : ' ';
+    const text = line.text.trim() === '' ? '&nbsp;' : escapeHtml(line.text);
+    const extra = (line.type === 'del' || line.type === 'add') ? ' title="クリックで全文表示 / 折りたたむ"' : '';
+    html += `<div class="diff-line ${cls}"${extra}><span class="diff-prefix">${prefix}</span><span>${text}</span></div>`;
+  }
+  return html;
+}
+
+// ============================================================
+// State
+// ============================================================
+let viewMode = 'list'; // 'list' | 'tile' | 'image'
+let activeTag = null; // null = すべて表示
+let pinFilter = false;
+const imageCache = {}; // url -> string[] | 'loading' | 'error'
+const IMAGE_CACHE_LIMIT = 80;
+
+function setImageCache(url, value) {
+  if (!url) return;
+  delete imageCache[url];
+  imageCache[url] = value;
+  const keys = Object.keys(imageCache);
+  while (keys.length > IMAGE_CACHE_LIMIT) {
+    const oldest = keys.shift();
+    if (oldest) delete imageCache[oldest];
+  }
+}
+let cloudConfig = loadCloudConfig();
+let cloudSyncTimer = null;
+let cloudSyncPromise = Promise.resolve();
+
+let sites = safeLoadJson('antenna-sites', []);
+if (!Array.isArray(sites)) sites = [];
+const seenSiteUrls = new Set();
+sites = sites.map(normalizeSite).filter(site => {
+  if (!site || seenSiteUrls.has(site.url)) return false;
+  seenSiteUrls.add(site.url);
+  return true;
+});
+
+let selectedIndex = -1;
+
+function touchSite(index) {
+  if (sites[index]) sites[index].updatedAt = new Date();
+}
+
+function saveSites(options = {}) {
+  try {
+    const data = sites.map(s => {
+      const { _checking, _checkPromise, ...rest } = s;
+      if (s.status === 'checking') {
+        return { ...rest, status: s.prevHash ? 'ok' : 'unchecked' };
+      }
+      return rest;
+    });
+    localStorage.setItem('antenna-sites', JSON.stringify(data));
+    if (!options.skipCloud) queueCloudSync('sites');
+    return true;
+  } catch {
+    setStatus('⚠️ 保存に失敗しました（容量超過の可能性）');
+    return false;
+  }
+}
+
+// ============================================================
+// Cloud sync
+// ============================================================
+function loadCloudConfig() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(CLOUD_STORAGE_KEY) || '{}');
+    return {
+      url: parsed.url || '',
+      anonKey: parsed.anonKey || '',
+      profileId: parsed.profileId || DEFAULT_CLOUD_PROFILE_ID,
+    };
+  } catch {
+    return { url: '', anonKey: '', profileId: DEFAULT_CLOUD_PROFILE_ID };
+  }
+}
+
+function hasCloudConfig() {
+  return Boolean(cloudConfig.url && cloudConfig.anonKey && cloudConfig.profileId);
+}
+
+function saveCloudConfig(nextConfig) {
+  cloudConfig = {
+    url: (nextConfig.url || '').trim(),
+    anonKey: (nextConfig.anonKey || '').trim(),
+    profileId: (nextConfig.profileId || DEFAULT_CLOUD_PROFILE_ID).trim() || DEFAULT_CLOUD_PROFILE_ID,
+  };
+  try { localStorage.setItem(CLOUD_STORAGE_KEY, JSON.stringify(cloudConfig)); } catch {}
+  updateCloudStatus();
+}
+
+function updateCloudStatus(mode) {
+  const el = document.getElementById('cloud-status');
+  if (!el) return;
+  const online = mode === 'online' || hasCloudConfig();
+  el.textContent = online ? `sync: ${cloudConfig.profileId}` : 'local';
+  el.title = `Web Antenna ${APP_VERSION}`;
+  el.classList.toggle('online', online);
+}
+
+function getCloudRestBase() {
+  return cloudConfig.url.replace(/\/+$/, '') + '/rest/v1';
+}
+
+function getCloudHeaders(extra = {}) {
+  return {
+    apikey: cloudConfig.anonKey,
+    Authorization: `Bearer ${cloudConfig.anonKey}`,
+    ...extra,
+  };
+}
+
+async function cloudFetch(tableName, url, options = {}) {
+  let resp;
+  try {
+    resp = await fetch(url, {
+      ...options,
+      headers: getCloudHeaders(options.headers || {}),
+    });
+  } catch (err) {
+    throw new Error(`${tableName}: fetch失敗: ${err.message || err}`);
+  }
+  if (!resp.ok) {
+    let detail = '';
+    try {
+      const body = await resp.json();
+      detail = body.message || body.hint || JSON.stringify(body);
+    } catch {
+      detail = await resp.text();
+    }
+    throw new Error(`${tableName}: HTTP ${resp.status}${detail ? ` / ${detail}` : ''}`);
+  }
+  return resp;
+}
+
+async function cloudFetchJson(tableName, url, options = {}) {
+  const resp = await cloudFetch(tableName, url, options);
+  if (resp.status === 204) return [];
+  return resp.json();
+}
+
+async function runCloudSelect(tableName, url) {
+  const data = await cloudFetchJson(tableName, url);
+  return Array.isArray(data) ? data : [];
+}
+
+function buildCloudSelectUrl(tableName, selectColumns, orderColumn = '') {
+  const params = new URLSearchParams();
+  params.set('select', selectColumns);
+  params.set('profile_id', `eq.${cloudConfig.profileId}`);
+  if (orderColumn) params.set('order', orderColumn);
+  return `${getCloudRestBase()}/${tableName}?${params.toString()}`;
+}
+
+function buildCloudFilteredUrl(tableName, filters) {
+  const params = new URLSearchParams();
+  Object.entries(filters).forEach(([column, value]) => {
+    params.set(column, `eq.${value}`);
+  });
+  return `${getCloudRestBase()}/${tableName}?${params.toString()}`;
+}
+
+async function deleteCloudRows(tableName, filters) {
+  await cloudFetch(tableName, buildCloudFilteredUrl(tableName, filters), {
+    method: 'DELETE',
+    headers: { Prefer: 'return=minimal' },
+  });
+}
+
+async function upsertCloudRows(tableName, rows, conflictColumns) {
+  if (rows.length === 0) return;
+  const params = new URLSearchParams();
+  params.set('on_conflict', conflictColumns.join(','));
+  await cloudFetch(tableName, `${getCloudRestBase()}/${tableName}?${params.toString()}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Prefer: 'resolution=merge-duplicates,return=minimal',
+    },
+    body: JSON.stringify(rows),
+  });
+}
+
+async function syncCloudTable(tableName, rows, keyColumn, conflictColumns) {
+  await upsertCloudRows(tableName, rows, conflictColumns);
+  if (rows.length === 0) {
+    await deleteCloudRows(tableName, { profile_id: cloudConfig.profileId });
+    return;
+  }
+  const currentKeys = new Set(rows.map(row => String(row[keyColumn] || '')).filter(Boolean));
+  const existingRows = await runCloudSelect(tableName, buildCloudSelectUrl(tableName, keyColumn));
+  const staleKeys = existingRows
+    .map(row => String(row[keyColumn] || ''))
+    .filter(key => key && !currentKeys.has(key));
+  for (const staleKey of staleKeys) {
+    await deleteCloudRows(tableName, { profile_id: cloudConfig.profileId, [keyColumn]: staleKey });
+  }
+}
+
+function dateToIso(value) {
+  const date = normalizeDate(value);
+  return date ? date.toISOString() : null;
+}
+
+function serializeSiteForCloud(site) {
+  const status = site.status === 'checking' ? (site.prevHash ? 'ok' : 'unchecked') : site.status;
+  return {
+    profile_id: cloudConfig.profileId,
+    url: site.url,
+    label: site.label || '',
+    selector: site.selector || '',
+    ignore_selector: site.ignoreSelector || '',
+    ignore_text_pattern: site.ignoreTextPattern || '',
+    tags: Array.isArray(site.tags) ? site.tags : [],
+    pinned: site.pinned === true,
+    added_at: dateToIso(site.addedAt) || new Date().toISOString(),
+    last_checked_at: dateToIso(site.lastCheckedAt),
+    last_changed_at: dateToIso(site.lastChangedAt),
+    prev_text: site.prevText || null,
+    prev_hash: site.prevHash || null,
+    snippet: site.snippet || null,
+    snippet_diff: Array.isArray(site.snippetDiff) ? site.snippetDiff : null,
+    status: ['unchecked', 'ok', 'error'].includes(status) ? status : 'unchecked',
+    error_msg: site.errorMsg || null,
+    updated_at: dateToIso(site.updatedAt) || new Date().toISOString(),
+  };
+}
+
+function cloudSiteToLocal(row) {
+  return normalizeSite({
+    url: row.url,
+    label: row.label,
+    selector: row.selector,
+    ignoreSelector: row.ignore_selector,
+    ignoreTextPattern: row.ignore_text_pattern,
+    tags: Array.isArray(row.tags) ? row.tags : [],
+    pinned: row.pinned,
+    addedAt: row.added_at,
+    lastCheckedAt: row.last_checked_at,
+    lastChangedAt: row.last_changed_at,
+    prevText: row.prev_text,
+    prevHash: row.prev_hash,
+    snippet: row.snippet,
+    snippetDiff: Array.isArray(row.snippet_diff) ? row.snippet_diff : null,
+    status: row.status,
+    errorMsg: row.error_msg,
+    updatedAt: row.updated_at,
+  });
+}
+
+function getSiteVersion(site) {
+  const updated = Date.parse(site?.updatedAt || '');
+  if (!Number.isNaN(updated)) return updated;
+  const checked = Date.parse(site?.lastCheckedAt || '');
+  if (!Number.isNaN(checked)) return checked;
+  const added = Date.parse(site?.addedAt || '');
+  return Number.isNaN(added) ? 0 : added;
+}
+
+function mergeSites(localSites, cloudSites) {
+  const localByUrl = new Map();
+  localSites.forEach(site => { if (site?.url) localByUrl.set(site.url, site); });
+  const merged = localSites.filter(site => site?.url);
+
+  cloudSites.forEach(site => {
+    if (!site?.url) return;
+    const current = localByUrl.get(site.url);
+    if (current) {
+      if (getSiteVersion(site) > getSiteVersion(current)) {
+        const checkingState = {
+          _checking: current._checking,
+          _checkPromise: current._checkPromise,
+        };
+        Object.keys(current).forEach(key => {
+          if (!key.startsWith('_')) delete current[key];
+        });
+        Object.assign(current, site);
+        if (checkingState._checking) current._checking = checkingState._checking;
+        if (checkingState._checkPromise) current._checkPromise = checkingState._checkPromise;
+      }
+    } else {
+      merged.push(site);
+      localByUrl.set(site.url, site);
+    }
+  });
+
+  localSites.splice(0, localSites.length, ...merged);
+  return localSites;
+}
+
+function queueCloudSync(reason = 'change') {
+  if (!hasCloudConfig()) return;
+  clearTimeout(cloudSyncTimer);
+  cloudSyncTimer = setTimeout(() => {
+    pushCloudState(reason).catch(err => {
+      console.error('[Web Antenna Cloud] sync failed', err);
+      updateCloudStatus();
+      showStatus(`同期失敗: ${err.message}`, 9000, 'error');
+    });
+  }, 700);
+}
+
+async function pushCloudState(reason = 'change') {
+  if (!hasCloudConfig()) return null;
+  clearTimeout(cloudSyncTimer);
+  const runSync = async () => {
+    const rows = sites.filter(site => site.url).map(serializeSiteForCloud);
+    await syncCloudTable('antenna_sites', rows, 'url', ['profile_id', 'url']);
+    updateCloudStatus('online');
+    if (reason === 'manual') showStatus(`同期しました（サイト${rows.length}件）`, 5000, 'success');
+    return { sites: rows.length };
+  };
+  cloudSyncPromise = cloudSyncPromise.then(runSync, runSync);
+  return cloudSyncPromise;
+}
+
+async function loadCloudState() {
+  if (!hasCloudConfig()) return false;
+  try {
+    const rows = await runCloudSelect(
+      'antenna_sites',
+      buildCloudSelectUrl('antenna_sites', 'url,label,selector,ignore_selector,ignore_text_pattern,tags,pinned,added_at,last_checked_at,last_changed_at,prev_text,prev_hash,snippet,snippet_diff,status,error_msg,updated_at', 'updated_at.desc')
+    );
+    const cloudSites = rows.map(cloudSiteToLocal).filter(Boolean);
+    const selectedUrl = selectedIndex >= 0 ? sites[selectedIndex]?.url : null;
+    const cloudByUrl = new Map(cloudSites.map(site => [site.url, site]));
+    const hasLocalChangesToPush = sites.some(site => {
+      if (!site?.url) return false;
+      const cloudSite = cloudByUrl.get(site.url);
+      return !cloudSite || getSiteVersion(site) > getSiteVersion(cloudSite);
+    });
+    mergeSites(sites, cloudSites);
+    if (selectedUrl) selectedIndex = sites.findIndex(site => site.url === selectedUrl);
+    saveSites({ skipCloud: true });
+    renderTagFilterBar();
+    renderList();
+    showDetail();
+    updateCloudStatus('online');
+    if (hasLocalChangesToPush) await pushCloudState('merge');
+    showStatus(`同期データを取得しました（サイト${sites.length}件）`, 5000, 'success');
+    return true;
+  } catch (err) {
+    console.error('[Web Antenna Cloud] load failed', err);
+    updateCloudStatus();
+    showStatus(`同期データの取得に失敗: ${err.message}`, 9000, 'error');
+    return false;
+  }
+}
+
+// ============================================================
+// Utilities
+// ============================================================
+function setStatus(msg) {
+  document.getElementById('statusbar').textContent = msg;
+}
+
+function showStatus(msg, duration = 5000, type = '') {
+  const el = document.getElementById('status');
+  el.textContent = msg;
+  el.className = type;
+  el.style.display = 'block';
+  clearTimeout(el._timer);
+  el._timer = setTimeout(() => {
+    el.style.display = 'none';
+    el.className = '';
+  }, duration);
+}
+
+// ---- Check loader animation ----
+let _checkLoaderDotTarget = 0;
+
+function showCheckLoader(total) {
+  _checkLoaderDotTarget = 0;
+  const loader = document.getElementById('check-loader');
+  loader.classList.remove('complete');
+  document.querySelectorAll('#check-loader-dots .check-dot').forEach((d, i) => {
+    d.className = 'check-dot waiting';
+    d.style.animationDelay = `${i * 0.18}s`;
+  });
+  document.getElementById('check-loader-count').textContent = `0 / ${total}`;
+  loader.classList.add('active');
+}
+
+function updateCheckLoader(completed, total) {
+  document.getElementById('check-loader-count').textContent = `${completed} / ${total}`;
+  const dots = document.querySelectorAll('#check-loader-dots .check-dot');
+  if (!dots.length) return;
+  const target = Math.round(completed * dots.length / total);
+  for (let i = _checkLoaderDotTarget; i < target && i < dots.length; i++) {
+    dots[i].classList.remove('waiting');
+    dots[i].classList.add('done');
+  }
+  _checkLoaderDotTarget = Math.max(_checkLoaderDotTarget, target);
+}
+
+function hideCheckLoader() {
+  const loader = document.getElementById('check-loader');
+  document.querySelectorAll('#check-loader-dots .check-dot.waiting').forEach(d => {
+    d.classList.remove('waiting');
+    d.classList.add('done');
+  });
+  loader.classList.add('complete');
+  document.getElementById('check-loader-count').textContent = '✓ 完了';
+  setTimeout(() => { loader.classList.remove('active', 'complete'); }, 900);
+}
+
+function escapeHtml(s) {
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function hostnameOf(url) {
+  try { return new URL(url).hostname; } catch { return url; }
+}
+
+function getSiteLabelByUrl(url) {
+  const site = sites.find(s => s.url === url);
+  if (site?.label) return site.label;
+  return hostnameOf(url);
+}
+
+function relativeTime(date) {
+  if (!date) return '—';
+  const diff = Date.now() - date.getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return 'たった今';
+  if (m < 60) return `${m}分前`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}時間前`;
+  const d = Math.floor(h / 24);
+  if (d < 30) return `${d}日前`;
+  const mo = Math.floor(d / 30);
+  return `${mo}ヶ月前`;
+}
+
+function recencyTier(date) {
+  if (!date) return 'old';
+  const ms = Date.now() - date.getTime();
+  if (ms < 60000)       return 'justnow';
+  const h = ms / 3600000;
+  if (h < 1)  return 'fresh';
+  if (h < 6)  return 'recent';
+  if (h < 24) return 'today';
+  return 'old';
+}
+
+function formatDate(date) {
+  if (!date) return '—';
+  const y = date.getFullYear();
+  const mo = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  const h = String(date.getHours()).padStart(2, '0');
+  const mi = String(date.getMinutes()).padStart(2, '0');
+  return `${y}/${mo}/${d} ${h}:${mi}`;
+}
+
+function faviconUrl(siteUrl) {
+  try {
+    const origin = new URL(siteUrl).origin;
+    return `https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=${encodeURIComponent(origin)}&size=16`;
+  } catch { return ''; }
+}
+
+function isSafeUrl(url) {
+  try {
+    const u = new URL(url);
+    return u.protocol === 'http:' || u.protocol === 'https:';
+  } catch { return false; }
+}
+
+function isMobileViewport() {
+  return window.matchMedia('(max-width: 760px)').matches;
+}
+
+function closeMobileDetail() {
+  document.body.classList.remove('mobile-detail-open');
+}
+
+function sortedSites() {
+  return [...sites].sort((a, b) => {
+    const aDate = a.lastChangedAt || new Date(0);
+    const bDate = b.lastChangedAt || new Date(0);
+    if (aDate - bDate !== 0) return bDate - aDate;
+    // どちらも更新なし → 登録順（古い順）を維持
+    return (a.addedAt || new Date(0)) - (b.addedAt || new Date(0));
+  });
+}
+
+function visibleSites() {
+  let sorted = sortedSites();
+  if (activeTag) {
+    sorted = sorted.filter(s => (s.tags || []).includes(activeTag));
+  }
+  if (pinFilter) {
+    sorted = sorted.filter(s => s.pinned);
+  }
+  return sorted;
+}
+
+// ============================================================
+// Render
+// ============================================================
+function renderTagFilterBar() {
+  const bar = document.getElementById('tag-filter-bar');
+  const allTags = [...new Set(sites.flatMap(s => s.tags || []))].sort();
+  if (allTags.length === 0) {
+    bar.style.display = 'none';
+    activeTag = null;
+    return;
+  }
+  bar.style.display = '';
+  bar.innerHTML = '';
+  [null, ...allTags].forEach(tag => {
+    const btn = document.createElement('button');
+    btn.className = 'tag-filter-btn' + (activeTag === tag ? ' active' : '');
+    btn.textContent = tag === null ? 'すべて' : tag;
+    btn.addEventListener('click', () => {
+      activeTag = tag;
+      renderTagFilterBar();
+      renderList();
+    });
+    bar.appendChild(btn);
+  });
+}
+
+// ---- 画像モード: グリッド描画 ----
+let lightboxImages = []; // 現在表示中サイトの画像URL配列
+let lightboxIndex = 0;  // 現在表示中の画像インデックス
+let lightboxSite = null; // 現在表示中のサイト
+
+function renderImageGrid(grid, images, site) {
+  if (!images || images.length === 0) {
+    grid.innerHTML = '<div class="image-group-empty">画像なし</div>';
+    return;
+  }
+  grid.innerHTML = '';
+  images.forEach((url, i) => {
+    const card = document.createElement('div');
+    card.className = 'image-card';
+    const img = document.createElement('img');
+    img.src = url;
+    img.alt = '';
+    img.loading = 'lazy';
+    img.onerror = () => { card.style.display = 'none'; };
+    img.onload = () => {
+      if (img.naturalWidth && img.naturalHeight) {
+        const sizeEl = document.createElement('span');
+        sizeEl.className = 'image-size';
+        sizeEl.textContent = `${img.naturalWidth}×${img.naturalHeight}`;
+        card.appendChild(sizeEl);
+      }
+    };
+    card.appendChild(img);
+    card.addEventListener('click', () => openLightbox(images, i, site));
+    grid.appendChild(card);
+  });
+}
+
+function openLightbox(images, index, site) {
+  lightboxImages = images;
+  lightboxIndex = index;
+  lightboxSite = site;
+  updateLightbox();
+  document.getElementById('image-lightbox').classList.add('open');
+}
+
+function updateLightbox() {
+  const lb = document.getElementById('image-lightbox');
+  document.getElementById('image-lightbox-img').src = lightboxImages[lightboxIndex] || '';
+  document.getElementById('image-lightbox-label').textContent = lightboxSite?.label || lightboxSite?.url || '';
+  const link = document.getElementById('image-lightbox-link');
+  link.href = lightboxSite?.url || '#';
+  const fav = lightboxSite ? faviconUrl(lightboxSite.url) : '';
+  const favEl = document.getElementById('image-lightbox-favicon');
+  if (fav && isSafeUrl(fav)) { favEl.src = fav; favEl.style.display = ''; } else { favEl.style.display = 'none'; }
+  document.getElementById('image-lightbox-prev').style.visibility = lightboxIndex > 0 ? '' : 'hidden';
+  document.getElementById('image-lightbox-next').style.visibility = lightboxIndex < lightboxImages.length - 1 ? '' : 'hidden';
+}
+
+function closeLightbox() {
+  document.getElementById('image-lightbox').classList.remove('open');
+}
+
+function renderList() {
+  const list = document.getElementById('site-list');
+  const sorted = visibleSites();
+  document.getElementById('site-count').textContent =
+    pinFilter  ? `📍 ${sorted.length}件` :
+    activeTag  ? `${sorted.length}/${sites.length}件` :
+                 `${sites.length}件`;
+
+  if (sites.length === 0) {
+    list.innerHTML = '<div style="padding:24px 12px;color:#3a4a5a;font-size:12px;text-align:center;">サイトが登録されていません</div>';
+    return;
+  }
+
+  if (sorted.length === 0) {
+    list.innerHTML = '<div style="padding:24px 12px;color:#3a4a5a;font-size:12px;text-align:center;">該当するサイトがありません</div>';
+    return;
+  }
+
+  // ---- 画像モード ----
+  if (viewMode === 'image') {
+    list.innerHTML = '';
+    sorted.forEach(site => {
+      const favicon = faviconUrl(site.url);
+      const group = document.createElement('div');
+      group.className = 'image-group';
+      group.dataset.url = site.url;
+
+      const faviconHtml = favicon && isSafeUrl(favicon)
+        ? `<img class="favicon" src="${escapeHtml(favicon)}" onerror="this.style.display='none'" alt="">`
+        : '';
+      group.innerHTML = `
+        <div class="image-group-header">
+          ${faviconHtml}
+          <span>${escapeHtml(site.label || site.url)}</span>
+          <a href="${escapeHtml(site.url)}" target="_blank" rel="noopener noreferrer">↗ 開く</a>
+          <button class="image-reload-btn" data-tooltip="画像を再取得" aria-label="画像を再取得">⟳</button>
+        </div>
+        <div class="image-grid" data-url="${escapeHtml(site.url)}"></div>
+      `;
+      list.appendChild(group);
+
+      const grid = group.querySelector('.image-grid');
+
+      const loadImages = () => {
+        grid.innerHTML = '<div class="image-group-loading"><span class="site-checking-spinner"></span> 取得中…</div>';
+        setImageCache(site.url, 'loading');
+        fetchPage(site.url).then(html => {
+          setImageCache(site.url, extractPageImages(html, site.url, site.selector));
+          const g = list.querySelector(`.image-grid[data-url="${CSS.escape(site.url)}"]`);
+          if (g) renderImageGrid(g, imageCache[site.url], site);
+        }).catch(() => {
+          setImageCache(site.url, 'error');
+          const g = list.querySelector(`.image-grid[data-url="${CSS.escape(site.url)}"]`);
+          if (g) g.innerHTML = '<div class="image-group-empty">取得できませんでした</div>';
+        });
+      };
+
+      group.querySelector('.image-reload-btn').addEventListener('click', () => {
+        delete imageCache[site.url];
+        loadImages();
+      });
+
+      if (imageCache[site.url] === 'loading') {
+        grid.innerHTML = '<div class="image-group-loading"><span class="site-checking-spinner"></span> 取得中…</div>';
+      } else if (imageCache[site.url] === 'error') {
+        grid.innerHTML = '<div class="image-group-empty">取得できませんでした</div>';
+      } else if (imageCache[site.url]) {
+        renderImageGrid(grid, imageCache[site.url], site);
+      } else {
+        loadImages();
+      }
+    });
+    return;
+  }
+
+  list.innerHTML = '';
+  sorted.forEach(site => {
+    const originalIndex = sites.indexOf(site);
+    const item = document.createElement('div');
+    const isActive = originalIndex === selectedIndex;
+    item.className = 'site-item' +
+      (isActive ? ' active' : '');
+    item.dataset.index = originalIndex;
+
+    let badgeHtml = '';
+    if (site.status === 'checking') {
+      badgeHtml = `<span class="site-checking-spinner"></span>`;
+    } else if (!site.lastCheckedAt) {
+      badgeHtml = `<span class="badge badge-unchecked">未確認</span>`;
+    } else if (site.status === 'error') {
+      badgeHtml = `<span class="badge badge-error">エラー</span>`;
+    }
+
+    const timeLabel = site.lastCheckedAt ? relativeTime(site.lastCheckedAt) : '';
+    const changedTimeLabel = site.lastChangedAt ? relativeTime(site.lastChangedAt) : '';
+
+    const favicon = faviconUrl(site.url);
+
+    const tagsHtml = (site.tags || []).length > 0
+      ? `<div class="site-tag-list">${site.tags.map(t =>
+          `<span class="site-tag" data-tag="${escapeHtml(t)}">#${escapeHtml(t)}</span>`
+        ).join('')}</div>`
+      : '';
+
+    if (viewMode === 'tile') {
+      const domain = hostnameOf(site.url);
+      item.innerHTML = `
+        <div class="site-info">
+          <div class="site-meta" style="margin-bottom:4px">
+            ${favicon && isSafeUrl(favicon) ? `<img class="site-favicon" src="${escapeHtml(favicon)}" onerror="this.style.display='none'" alt="">` : ''}
+            ${badgeHtml}
+            ${changedTimeLabel ? `<span style="flex-shrink:0;font-size:10px;color:#7a8ba0">${changedTimeLabel}</span>` : ''}
+            <button class="tile-pin-btn${site.pinned ? ' pinned' : ''}" data-index="${originalIndex}" data-tooltip="${site.pinned ? 'ピンを外す' : 'ピンを立てる'}" aria-label="${site.pinned ? 'ピンを外す' : 'ピンを立てる'}">📍</button>
+          </div>
+          <div class="site-label">${escapeHtml(site.label || site.url)}</div>
+          <div class="tile-domain">${escapeHtml(domain)}</div>
+          ${tagsHtml}
+          ${site.snippet ? `<div class="tile-snippet">${escapeHtml(site.snippet)}</div>` : ''}
+          <a class="tile-open-btn" href="${escapeHtml(site.url)}" target="_blank" rel="noopener noreferrer">↗ 開く</a>
+        </div>
+      `;
+      item.querySelector('.tile-pin-btn').addEventListener('click', e => {
+        e.stopPropagation();
+        togglePin(originalIndex);
+      });
+    } else {
+      const domain = hostnameOf(site.url);
+      const changedLabelFull = site.lastChangedAt ? relativeTime(site.lastChangedAt) : '';
+      item.innerHTML = `
+        <div class="row-header">
+          ${favicon && isSafeUrl(favicon) ? `<img class="site-favicon" src="${escapeHtml(favicon)}" onerror="this.style.display='none'" alt="">` : '<span style="width:16px;flex-shrink:0"></span>'}
+          <div class="row-title-group">
+            <span class="row-label">${escapeHtml(site.label || site.url)}</span>
+            <a class="row-open-btn" href="${escapeHtml(site.url)}" target="_blank" rel="noopener noreferrer">↗︎</a>
+          </div>
+          ${badgeHtml}
+          <div class="row-actions">
+            ${timeLabel ? `<span class="row-time">最終確認: ${timeLabel}</span>` : ''}
+            <button class="row-pin-btn${site.pinned ? ' pinned' : ''}" data-index="${originalIndex}" data-tooltip="${site.pinned ? 'ピンを外す' : 'ピンを立てる'}" aria-label="${site.pinned ? 'ピンを外す' : 'ピンを立てる'}">📍</button>
+            <button class="row-check-btn" data-index="${originalIndex}" data-tooltip="確認" aria-label="このサイトを確認">⟳</button>
+            <button class="row-delete-btn" data-index="${originalIndex}" data-tooltip="削除" aria-label="削除">✕</button>
+          </div>
+        </div>
+        <div class="row-meta">
+          <span class="row-meta-item">${escapeHtml(domain)}</span>
+          ${changedLabelFull ? `<span class="row-meta-sep">·</span><span class="row-meta-item recency-${recencyTier(site.lastChangedAt)}">最終更新: ${escapeHtml(changedLabelFull)}</span>` : ''}
+        </div>
+        ${tagsHtml}
+        <div class="row-detail">${buildRowDetailHtml(site, originalIndex)}</div>
+      `;
+      item.querySelector('.row-pin-btn').addEventListener('click', e => {
+        e.stopPropagation();
+        togglePin(originalIndex);
+      });
+      item.querySelector('.row-check-btn').addEventListener('click', e => {
+        e.stopPropagation();
+        checkSite(originalIndex);
+      });
+      item.querySelector('.row-delete-btn').addEventListener('click', e => {
+        e.stopPropagation();
+        deleteSite(originalIndex);
+      });
+      bindSelectorInput(item);
+      bindNoiseRuleInputs(item);
+      bindTagsInput(item);
+      bindHelpIcons(item);
+      bindPresetDropdowns(item);
+      bindMonitorTestBtn(item);
+    }
+    item.addEventListener('click', e => {
+      const clickedTag = e.target.closest('.site-tag');
+      if (clickedTag) {
+        activeTag = clickedTag.dataset.tag;
+        renderTagFilterBar();
+        renderList();
+        return;
+      }
+      const tag = e.target.tagName;
+      if (tag === 'A' || tag === 'INPUT' || tag === 'BUTTON') return;
+      if (e.target.closest('.row-detail')) return;
+      if (isMobileViewport()) {
+        selectSite(originalIndex);
+        return;
+      }
+      if (originalIndex === selectedIndex) {
+        selectedIndex = -1;
+        renderList();
+      } else {
+        selectSite(originalIndex);
+      }
+    });
+    list.appendChild(item);
+  });
+}
+
+function selectSite(index) {
+  selectedIndex = index;
+  renderList();
+  if (viewMode === 'tile') {
+    showTileOverlay();
+  } else if (isMobileViewport()) {
+    showDetail();
+    document.body.classList.add('mobile-detail-open');
+  } else {
+    const activeEl = document.querySelector('.site-item.active');
+    if (activeEl) activeEl.scrollIntoView({ block: 'nearest' });
+  }
+}
+
+function showTileOverlay() {
+  const overlay = document.getElementById('tile-overlay');
+  if (selectedIndex < 0 || selectedIndex >= sites.length) {
+    overlay.classList.remove('open');
+    return;
+  }
+  const site = sites[selectedIndex];
+  document.getElementById('tile-overlay-title').textContent = site.label || site.url;
+  document.getElementById('tile-overlay-open-btn').href = site.url;
+  document.getElementById('tile-overlay-check-btn').dataset.index = selectedIndex;
+  const overlayPinBtn = document.getElementById('tile-overlay-pin-btn');
+  overlayPinBtn.dataset.index = selectedIndex;
+  overlayPinBtn.textContent = '📍';
+  overlayPinBtn.classList.toggle('pinned', site.pinned || false);
+  overlayPinBtn.dataset.tooltip = site.pinned ? 'ピンを外す' : 'ピンを立てる';
+  overlayPinBtn.setAttribute('aria-label', site.pinned ? 'ピンを外す' : 'ピンを立てる');
+  document.getElementById('tile-overlay-body').innerHTML = buildDetailHtml(site, selectedIndex);
+  overlay.classList.add('open');
+  bindSelectorInput(document.getElementById('tile-overlay-body'));
+  bindNoiseRuleInputs(document.getElementById('tile-overlay-body'));
+  bindHelpIcons(document.getElementById('tile-overlay-body'));
+  bindPresetDropdowns(document.getElementById('tile-overlay-body'));
+  bindMonitorTestBtn(document.getElementById('tile-overlay-body'));
+}
+
+function showDetail() {
+  if (viewMode === 'tile') {
+    showTileOverlay();
+    return;
+  }
+  if (!isMobileViewport()) return;
+  const titleEl = document.getElementById('detail-title');
+  const openBtn = document.getElementById('detail-open-btn');
+  const content = document.getElementById('detail-content');
+  if (selectedIndex < 0 || selectedIndex >= sites.length) {
+    titleEl.textContent = '—';
+    openBtn.href = '#';
+    content.innerHTML = '<div id="detail-empty">サイトを選択するか、URLを追加してください</div>';
+    closeMobileDetail();
+    return;
+  }
+  const site = sites[selectedIndex];
+  titleEl.textContent = site.label || site.url;
+  openBtn.href = site.url;
+  content.innerHTML = buildDetailHtml(site, selectedIndex);
+  bindSelectorInput(content);
+  bindNoiseRuleInputs(content);
+  bindHelpIcons(content);
+  bindPresetDropdowns(content);
+  bindMonitorTestBtn(content);
+}
+
+function buildDetailHtml(site, index) {
+  let html = '<div class="info-block">';
+
+  html += `<div class="info-row">
+    <span class="info-label">URL</span>
+    <span class="info-value"><a href="${escapeHtml(site.url)}" target="_blank" rel="noopener">${escapeHtml(site.url)}</a></span>
+  </div>`;
+
+  if (site.lastCheckedAt) {
+    html += `<div class="info-row">
+      <span class="info-label">最終確認</span>
+      <span class="info-value">${formatDate(site.lastCheckedAt)}</span>
+    </div>`;
+  }
+
+  if (site.lastChangedAt) {
+    html += `<div class="info-row">
+      <span class="info-label">最終更新</span>
+      <span class="info-value">${formatDate(site.lastChangedAt)}</span>
+    </div>`;
+  }
+
+  if (site.status === 'error') {
+    html += `<div class="error-text">⚠️ ${escapeHtml(site.errorMsg || '取得エラー')}</div>`;
+  } else if (!site.lastCheckedAt) {
+    html += `<div class="no-change" style="color:#7a8ba0">まだ確認されていません。「確認」または「全確認」で取得できます。</div>`;
+  } else if (site.status === 'checking') {
+    html += `<div class="no-change" style="color:#5ab85a">確認中…</div>`;
+  } else {
+    html += `<div class="no-change">✓ 変更なし</div>`;
+  }
+
+  if (site.snippet) {
+    const snippetLabel = '前回の差分（参照用）';
+    const diffHtml = site.snippetDiff ? buildDiffHtml(site.snippetDiff) : '';
+    const boxContent = diffHtml
+      ? `<div class="snippet-box diff">${diffHtml}</div>`
+      : `<div class="snippet-box">${escapeHtml(site.snippet)}</div>`;
+    html += `<div class="snippet-block">
+      <div class="snippet-label">${snippetLabel}</div>
+      ${boxContent}
+    </div>`;
+  }
+
+  html += `<details class="monitor-settings-details">
+    <summary class="monitor-settings-summary">監視設定</summary>
+    <div class="monitor-settings-body">
+      <div class="info-row">
+        <span class="info-label">監視範囲<span class="help-icon" data-help="selector">?</span></span>
+        <span class="info-value preset-wrap">
+          <input class="selector-input" type="text" data-index="${index}"
+            value="${escapeHtml(site.selector || '')}"
+            placeholder="CSSセレクタ（例: article, #content）空白=ページ全体">
+        </span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">除外要素<span class="help-icon" data-help="ignoreSelector">?</span></span>
+        <span class="info-value preset-wrap">
+          <input class="ignore-selector-input" type="text" data-index="${index}"
+            value="${escapeHtml(site.ignoreSelector || '')}"
+            placeholder="無視するCSSセレクタ（例: .ad, time）">
+        </span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">除外文字<span class="help-icon" data-help="ignoreText">?</span></span>
+        <span class="info-value preset-wrap">
+          <input class="ignore-text-input" type="text" data-index="${index}"
+            value="${escapeHtml(site.ignoreTextPattern || '')}"
+            placeholder="無視する正規表現（例: 閲覧数: \\d+）">
+        </span>
+      </div>
+      <div>
+        <button class="monitor-test-btn" data-index="${index}">テスト</button>
+        <div class="monitor-test-result"></div>
+      </div>
+    </div>
+  </details>`;
+
+  html += '</div>';
+  return html;
+}
+
+function buildRowDetailHtml(site, index) {
+  let html = '';
+
+  if (site.status === 'error') {
+    html += `<div class="error-text">⚠️ ${escapeHtml(site.errorMsg || '取得エラー')}</div>`;
+  } else if (!site.lastCheckedAt) {
+    html += `<div class="no-change" style="color:#7a8ba0">まだ確認されていません。「確認」ボタンで取得できます。</div>`;
+  } else if (site.status === 'checking') {
+    html += `<div class="no-change" style="color:#5ab85a">確認中…</div>`;
+  } else if (!site.snippet) {
+    html += `<div class="no-change">✓ 変更なし</div>`;
+  }
+
+  if (site.snippet) {
+    const diffHtml = site.snippetDiff ? buildDiffHtml(site.snippetDiff) : '';
+    const boxContent = diffHtml
+      ? `<div class="snippet-box diff">${diffHtml}</div>`
+      : `<div class="snippet-box">${escapeHtml(site.snippet)}</div>`;
+    html += `<div class="snippet-block">
+      <div class="snippet-label">前回の差分（参照用）</div>
+      ${boxContent}
+    </div>`;
+  }
+
+  html += `<div class="row-selector-row">
+    <span class="row-selector-label">タグ</span>
+    <input class="tags-input" type="text" data-index="${index}"
+      value="${escapeHtml((site.tags || []).join(', '))}"
+      placeholder="タグ（カンマ区切り）">
+  </div>`;
+
+  html += `<details class="monitor-settings-details row-monitor-details">
+    <summary class="monitor-settings-summary">監視設定</summary>
+    <div class="monitor-settings-body">
+      <div class="row-selector-row">
+        <span class="row-selector-label">監視範囲<span class="help-icon" data-help="selector">?</span></span>
+        <div class="preset-wrap" style="flex:1;min-width:0">
+          <input class="selector-input" type="text" data-index="${index}"
+            value="${escapeHtml(site.selector || '')}"
+            placeholder="CSSセレクタ（例: article, #content）空白=ページ全体">
+        </div>
+      </div>
+      <div class="row-selector-row">
+        <span class="row-selector-label">除外要素<span class="help-icon" data-help="ignoreSelector">?</span></span>
+        <div class="preset-wrap" style="flex:1;min-width:0">
+          <input class="ignore-selector-input" type="text" data-index="${index}"
+            value="${escapeHtml(site.ignoreSelector || '')}"
+            placeholder="無視するCSSセレクタ（例: .ad, time）">
+        </div>
+      </div>
+      <div class="row-selector-row">
+        <span class="row-selector-label">除外文字<span class="help-icon" data-help="ignoreText">?</span></span>
+        <div class="preset-wrap" style="flex:1;min-width:0">
+          <input class="ignore-text-input" type="text" data-index="${index}"
+            value="${escapeHtml(site.ignoreTextPattern || '')}"
+            placeholder="無視する正規表現（例: 閲覧数: \\d+）">
+        </div>
+      </div>
+      <div>
+        <button class="monitor-test-btn" data-index="${index}">テスト</button>
+        <div class="monitor-test-result"></div>
+      </div>
+    </div>
+  </details>`;
+
+  return html;
+}
+
+function resetSiteBaseline(index) {
+  sites[index].prevHash = null;
+  sites[index].prevText = null;
+  sites[index].snippet = null;
+  sites[index].snippetDiff = null;
+  sites[index].status = 'unchecked';
+  delete proxyCache[sites[index].url];
+  saveProxyCache();
+}
+
+function bindSelectorInput(container) {
+  const input = container.querySelector('.selector-input');
+  if (!input) return;
+  const save = () => {
+    const idx = parseInt(input.dataset.index);
+    if (!sites[idx]) return;
+    const newVal = input.value.trim();
+    if (newVal === (sites[idx].selector || '')) return;
+    const previous = { ...sites[idx] };
+    sites[idx].selector = newVal;
+    // セレクタが変わったらベースラインをリセット（次回確認時に再取得）
+    resetSiteBaseline(idx);
+    touchSite(idx);
+    if (!saveSites()) {
+      sites[idx] = previous;
+      input.value = previous.selector || '';
+      return;
+    }
+    renderList();
+    setStatus(newVal ? `監視範囲を "${newVal}" に設定しました（次回確認時に反映）` : '監視範囲をページ全体にリセットしました');
+  };
+  input.addEventListener('blur', save);
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); input.blur(); } });
+}
+
+function bindNoiseRuleInputs(container) {
+  const bind = (selector, field, label) => {
+    const input = container.querySelector(selector);
+    if (!input) return;
+    const save = () => {
+      const idx = parseInt(input.dataset.index);
+      if (!sites[idx]) return;
+      const newVal = input.value.trim();
+      if (newVal === (sites[idx][field] || '')) return;
+      const previous = { ...sites[idx] };
+      sites[idx][field] = newVal;
+      resetSiteBaseline(idx);
+      touchSite(idx);
+      if (!saveSites()) {
+        sites[idx] = previous;
+        input.value = previous[field] || '';
+        return;
+      }
+      renderList();
+      setStatus(newVal ? `${label}を設定しました（次回確認時に反映）` : `${label}を解除しました`);
+    };
+    input.addEventListener('blur', save);
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); input.blur(); } });
+  };
+  bind('.ignore-selector-input', 'ignoreSelector', '除外要素');
+  bind('.ignore-text-input', 'ignoreTextPattern', '除外文字');
+}
+
+function bindTagsInput(container) {
+  const input = container.querySelector('.tags-input');
+  if (!input) return;
+  const save = () => {
+    const idx = parseInt(input.dataset.index);
+    if (!sites[idx]) return;
+    const newTags = input.value.split(',').map(t => t.trim()).filter(Boolean);
+    if (JSON.stringify(sites[idx].tags || []) === JSON.stringify(newTags)) return;
+    const previous = sites[idx].tags || [];
+    const previousUpdatedAt = sites[idx].updatedAt;
+    sites[idx].tags = newTags;
+    touchSite(idx);
+    if (!saveSites()) {
+      sites[idx].tags = previous;
+      sites[idx].updatedAt = previousUpdatedAt;
+      input.value = previous.join(', ');
+      return;
+    }
+    renderTagFilterBar();
+    renderList();
+  };
+  input.addEventListener('blur', save);
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); input.blur(); } });
+}
+
+// ============================================================
+// Help tooltips
+// ============================================================
+const HELP_TEXTS = {
+  selector: `監視するページ範囲をCSSセレクタで指定します。<br>空欄の場合はページ全体を監視しますが、画面に出ない非表示要素やヘッダー・メニュー類は自動除外します。<br><br>例:<br><code>main</code> — メインコンテンツ領域<br><code>#main</code> — 自治体サイトなどの本文領域<br><code>article</code> — 記事要素のみ<br><code>#content</code> — id="content" の要素<br><code>.post-body</code> — class="post-body" の要素`,
+  ignoreSelector: `監視範囲から除外するHTML要素をCSSセレクタで指定します。広告・サイドバーなど変化してもノイズになる要素を除外できます。カンマ区切りで複数指定可能。<br><br>例:<br><code>.ad, .ads</code> — 広告要素<br><code>.sidebar</code> — サイドバー<br><code>time, .date</code> — 日時表示`,
+  ignoreText: `差分検出から除外するテキストを正規表現で指定します。アクセスカウンターや日時など頻繁に変わるがチェック不要なテキストを除外できます。<br><br>例:<br><code>閲覧数:\\s*\\d+</code> — 閲覧数カウンター<br><code>\\d+件のコメント</code> — コメント数<br><code>\\d{4}/\\d{2}/\\d{2}</code> — 日付表示`,
+};
+
+function toggleHelpTooltip(icon) {
+  const existing = document.querySelector('.help-tooltip');
+  if (existing) {
+    const wasThisIcon = existing._icon === icon;
+    existing.remove();
+    if (wasThisIcon) return;
+  }
+  const key = icon.dataset.help;
+  const text = HELP_TEXTS[key];
+  if (!text) return;
+  const tooltip = document.createElement('div');
+  tooltip.className = 'help-tooltip';
+  tooltip._icon = icon;
+  tooltip.innerHTML = text;
+  document.body.appendChild(tooltip);
+  const rect = icon.getBoundingClientRect();
+  tooltip.style.top = (rect.bottom + 4) + 'px';
+  tooltip.style.left = Math.max(4, rect.left - 10) + 'px';
+  const closeHandler = (e) => {
+    if (!tooltip.contains(e.target) && e.target !== icon) {
+      tooltip.remove();
+      document.removeEventListener('click', closeHandler, true);
+    }
+  };
+  setTimeout(() => document.addEventListener('click', closeHandler, true), 0);
+}
+
+function bindHelpIcons(container) {
+  container.querySelectorAll('.help-icon').forEach(icon => {
+    icon.addEventListener('click', e => { e.stopPropagation(); toggleHelpTooltip(icon); });
+  });
+}
+
+// ============================================================
+// Preset dropdowns
+// ============================================================
+const SELECTOR_PRESETS = {
+  selector: ['main', '#main', 'article', '#content', '.post-content', '.entry-content', '.main-content', '.article-body'],
+  ignoreSelector: ['.ad, .ads, .advertisement', '.sidebar', '.comment, .comments', 'time, .date', '.share, .social', '.related-posts'],
+  ignoreText: ['閲覧数:\\s*\\d+', '\\d+件のコメント', 'Copyright.*$', 'All Rights Reserved', '\\d{4}/\\d{2}/\\d{2} \\d{2}:\\d{2}'],
+};
+
+let _presetDropdown = null;
+
+function hidePresetDropdown() {
+  if (_presetDropdown) { _presetDropdown.remove(); _presetDropdown = null; }
+}
+
+function showPresetDropdown(input, presets) {
+  hidePresetDropdown();
+  const dropdown = document.createElement('div');
+  dropdown.className = 'selector-preset-dropdown';
+  presets.forEach(p => {
+    const item = document.createElement('div');
+    item.className = 'preset-item';
+    item.textContent = p;
+    item.addEventListener('mousedown', e => {
+      e.preventDefault();
+      input.value = p;
+      input.dispatchEvent(new Event('blur'));
+      hidePresetDropdown();
+    });
+    dropdown.appendChild(item);
+  });
+  const wrap = input.closest('.preset-wrap');
+  (wrap || input.parentElement).appendChild(dropdown);
+  _presetDropdown = dropdown;
+}
+
+function bindPresetDropdowns(container) {
+  const bind = (selector, presetKey) => {
+    const input = container.querySelector(selector);
+    if (!input) return;
+    input.addEventListener('focus', () => { if (!input.value) showPresetDropdown(input, SELECTOR_PRESETS[presetKey]); });
+    input.addEventListener('input', () => { if (!input.value) showPresetDropdown(input, SELECTOR_PRESETS[presetKey]); else hidePresetDropdown(); });
+    input.addEventListener('blur', () => { setTimeout(hidePresetDropdown, 150); });
+    input.addEventListener('keydown', e => { if (e.key === 'Escape') hidePresetDropdown(); });
+  };
+  bind('.selector-input', 'selector');
+  bind('.ignore-selector-input', 'ignoreSelector');
+  bind('.ignore-text-input', 'ignoreText');
+}
+
+// ============================================================
+// Monitor test / preview
+// ============================================================
+function bindMonitorTestBtn(container) {
+  const btn = container.querySelector('.monitor-test-btn');
+  if (!btn) return;
+  const resultEl = container.querySelector('.monitor-test-result');
+  btn.addEventListener('click', async () => {
+    const idx = parseInt(btn.dataset.index);
+    const site = sites[idx];
+    if (!site) return;
+    const selector = (container.querySelector('.selector-input')?.value || '').trim();
+    const ignoreSelector = (container.querySelector('.ignore-selector-input')?.value || '').trim();
+    const ignoreTextPattern = (container.querySelector('.ignore-text-input')?.value || '').trim();
+    btn.disabled = true;
+    btn.textContent = 'テスト中...';
+    resultEl.className = 'monitor-test-result';
+    resultEl.style.display = 'block';
+    resultEl.textContent = '取得中...';
+    try {
+      const html = await fetchPage(site.url);
+      let selectorMatched = true;
+      if (selector) {
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        try { selectorMatched = !!doc.querySelector(selector); } catch { selectorMatched = false; }
+      }
+      const { text } = extractPageContent(html, selector, ignoreSelector, ignoreTextPattern);
+      const preview = text.slice(0, 500);
+      if (!selectorMatched) {
+        resultEl.className = 'monitor-test-result warn';
+        resultEl.textContent = `⚠ セレクタ "${selector}" に一致する要素がありませんでした（ページ全体にフォールバック）\n\n${preview}${text.length > 500 ? '…' : ''}`;
+      } else {
+        resultEl.className = 'monitor-test-result';
+        resultEl.textContent = `✓ 抽出テキスト（先頭500文字）\n\n${preview}${text.length > 500 ? '…' : ''}`;
+      }
+    } catch (e) {
+      resultEl.className = 'monitor-test-result error';
+      resultEl.textContent = `✗ 取得エラー: ${e.message}`;
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'テスト';
+    }
+  });
+}
+
+// ============================================================
+// Add site
+// ============================================================
+async function addSite(inputUrl) {
+  let url = inputUrl.trim();
+  if (!url) return;
+  if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+  url = sanitizeHttpUrl(url);
+  if (!url) {
+    setStatus('URLが正しくありません');
+    return;
+  }
+
+  if (sites.some(s => s.url === url)) {
+    setStatus('すでに登録されています: ' + url);
+    return;
+  }
+
+  const site = {
+    url,
+    label: '',
+    selector: '',
+    ignoreSelector: '',
+    ignoreTextPattern: '',
+    tags: [],
+    pinned: false,
+    addedAt: new Date(),
+    lastCheckedAt: null,
+    lastChangedAt: null,
+    prevText: null,
+    prevHash: null,
+    snippet: null,
+    snippetDiff: null,
+    status: 'unchecked',
+    errorMsg: null,
+    updatedAt: new Date(),
+  };
+  const previous = [...sites];
+  sites.push(site);
+  if (!saveSites()) {
+    sites = previous;
+    return;
+  }
+  const newIndex = sites.length - 1;
+  selectedIndex = newIndex;
+  renderList();
+  showDetail();
+  setStatus(`追加しました: ${url}`);
+
+  await checkSite(newIndex);
+}
+
+// ============================================================
+// Check single site
+// ============================================================
+async function checkSite(index) {
+  const site = sites[index];
+  if (!site) return;
+  if (site._checking) return site._checkPromise || Promise.resolve();
+
+  site._checking = true;
+  site.status = 'checking';
+  renderList();
+  if (selectedIndex === index) showDetail();
+
+  site._checkPromise = (async () => {
+    try {
+      let _timeoutId = null;
+      const html = await Promise.race([
+        fetchPage(site.url),
+        new Promise((_, reject) => {
+          _timeoutId = setTimeout(() => reject(new Error('タイムアウト')), 30000);
+        }),
+      ]).finally(() => clearTimeout(_timeoutId));
+      const { title, text } = extractPageContent(
+        html,
+        site.selector || '',
+        site.ignoreSelector || '',
+        site.ignoreTextPattern || ''
+      );
+
+      if (title && !site.label) site.label = title;
+      site.lastCheckedAt = new Date();
+
+      const hash = await computeHash(text);
+
+      if (site.prevHash && site.prevHash !== hash) {
+        // Changed
+        site.snippet = findSnippet(text, site.prevText);
+        site.snippetDiff = buildDiffSnippet(text, site.prevText);
+        site.lastChangedAt = new Date();
+      }
+      site.status = 'ok';
+
+      site.prevHash = hash;
+      site.prevText = text;
+      site.errorMsg = null;
+      site.updatedAt = new Date();
+      return { ok: true, url: site.url };
+    } catch (e) {
+      site.status = 'error';
+      site.errorMsg = e.message;
+      site.lastCheckedAt = new Date();
+      site.updatedAt = new Date();
+      return { ok: false, url: site.url, error: e };
+    } finally {
+      site._checking = false;
+      saveSites();
+      renderList();
+      if (selectedIndex === index) showDetail();
+      delete site._checkPromise;
+    }
+  })();
+
+  return site._checkPromise;
+}
+
+// ============================================================
+// Check all
+// ============================================================
+let checkAllRunning = false;
+
+async function checkAll() {
+  if (checkAllRunning) return;
+  if (sites.length === 0) { setStatus('サイトが登録されていません'); return; }
+
+  checkAllRunning = true;
+  const spinner = document.getElementById('loading-spinner');
+  const addBtn = document.getElementById('add-btn');
+  spinner.style.display = 'inline-block';
+  addBtn.disabled = true;
+
+  const total = sites.length;
+  let completed = 0;
+  const failures = [];
+
+  showCheckLoader(total);
+
+  const queue = [...sites]; // インデックスではなくオブジェクト参照で保持（実行中の削除でずれない）
+  const CONCURRENCY = 3;
+
+  const worker = async () => {
+    while (queue.length > 0) {
+      const site = queue.shift();
+      const idx = sites.indexOf(site);
+      if (idx !== -1) {
+        const result = await checkSite(idx); // 実行中に削除されたサイトはスキップ
+        if (result && !result.ok) failures.push(result);
+      }
+      completed++;
+      updateCheckLoader(completed, total);
+    }
+  };
+
+  try {
+    await Promise.all(Array.from({ length: CONCURRENCY }, worker));
+  } finally {
+    spinner.style.display = 'none';
+    hideCheckLoader();
+    if (failures.length > 0) {
+      const failedNames = failures.slice(0, 3).map(f => getSiteLabelByUrl(f.url)).join('、');
+      const suffix = failures.length > 3 ? ` ほか${failures.length - 3}件` : '';
+      setStatus(`確認完了。一部失敗: ${failedNames}${suffix}`);
+    } else {
+      setStatus(`確認完了 — ${new Date().toLocaleTimeString()}`);
+    }
+    checkAllRunning = false;
+    addBtn.disabled = false;
+  }
+}
+
+// ============================================================
+// Toggle pin
+// ============================================================
+function togglePin(index) {
+  if (index < 0 || index >= sites.length) return;
+  const previous = sites[index].pinned;
+  const previousUpdatedAt = sites[index].updatedAt;
+  sites[index].pinned = !sites[index].pinned;
+  touchSite(index);
+  if (!saveSites()) {
+    sites[index].pinned = previous;
+    sites[index].updatedAt = previousUpdatedAt;
+    return;
+  }
+  renderList();
+  // タイルオーバーレイが同じサイトを表示中なら即座に反映
+  const overlayPinBtn = document.getElementById('tile-overlay-pin-btn');
+  if (overlayPinBtn && parseInt(overlayPinBtn.dataset.index) === index) {
+    const pinned = sites[index].pinned;
+    overlayPinBtn.classList.toggle('pinned', pinned);
+    overlayPinBtn.dataset.tooltip = pinned ? 'ピンを外す' : 'ピンを立てる';
+    overlayPinBtn.setAttribute('aria-label', pinned ? 'ピンを外す' : 'ピンを立てる');
+  }
+}
+
+// ============================================================
+// Delete site
+// ============================================================
+function deleteSite(index) {
+  if (index < 0 || index >= sites.length) return;
+  const url = sites[index].url;
+  if (!confirm(`「${sites[index].label || url}」を削除しますか？`)) return;
+  const removed = sites[index];
+  const cachedProxy = proxyCache[url];
+  sites.splice(index, 1);
+  delete imageCache[url];
+  delete proxyCache[url];
+  saveProxyCache();
+  if (!saveSites()) {
+    sites.splice(index, 0, removed);
+    if (cachedProxy) proxyCache[url] = cachedProxy;
+    saveProxyCache();
+    return;
+  }
+  selectedIndex = -1;
+  closeMobileDetail();
+  renderList();
+  showDetail();
+  setStatus('削除しました');
+}
+
+// ============================================================
+// Export / Import
+// ============================================================
+function exportSites() {
+  const data = JSON.stringify(sites.map(s => ({
+    url: s.url,
+    label: s.label,
+    selector: s.selector || '',
+    ignoreSelector: s.ignoreSelector || '',
+    ignoreTextPattern: s.ignoreTextPattern || '',
+    tags: s.tags || [],
+    pinned: s.pinned === true,
+  })), null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const a = document.createElement('a');
+  const url = URL.createObjectURL(blob);
+  a.href = url;
+  a.download = 'antenna-sites.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  setStatus('エクスポートしました');
+}
+
+function importSites(file) {
+  const reader = new FileReader();
+  reader.onerror = () => setStatus('ファイルを読み込めませんでした');
+  reader.onabort = () => setStatus('ファイルの読み込みがキャンセルされました');
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!Array.isArray(data)) throw new Error('invalid format');
+      let added = 0;
+      const previous = [...sites];
+      data.forEach(item => {
+        if (item == null) return;
+        const rawUrl = typeof item === 'string' ? item : item.url;
+        const url = sanitizeHttpUrl(String(rawUrl ?? '').trim());
+        if (!url || sites.some(s => s.url === url)) return;
+        const normalized = normalizeSite({
+          url,
+          label: item.label,
+          selector: item.selector,
+          ignoreSelector: item.ignoreSelector,
+          ignoreTextPattern: item.ignoreTextPattern,
+          tags: item.tags,
+          pinned: item.pinned,
+          addedAt: new Date(),
+          lastCheckedAt: null,
+          lastChangedAt: null,
+          prevText: null,
+          prevHash: null,
+          snippet: null,
+          status: 'unchecked',
+          errorMsg: null,
+          updatedAt: new Date(),
+        });
+        if (!normalized) return;
+        sites.push(normalized);
+        added++;
+      });
+      if (!saveSites()) {
+        sites = previous;
+        return;
+      }
+      renderList();
+      setStatus(`${added}件を追加しました`);
+    } catch {
+      setStatus('インポートに失敗しました（形式が不正です）');
+    }
+  };
+  reader.readAsText(file);
+}
+
+// ============================================================
+// Event listeners
+// ============================================================
+document.getElementById('add-btn').addEventListener('click', () => {
+  const input = document.getElementById('url-input');
+  addSite(input.value);
+  input.value = '';
+});
+
+document.getElementById('url-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { addSite(e.target.value); e.target.value = ''; }
+});
+
+document.getElementById('mobile-url-toggle-btn').addEventListener('click', () => {
+  const open = !document.body.classList.contains('mobile-url-open');
+  document.body.classList.toggle('mobile-url-open', open);
+  const btn = document.getElementById('mobile-url-toggle-btn');
+  btn.setAttribute('aria-label', open ? 'URL入力欄を閉じる' : 'URL入力欄を開く');
+  btn.dataset.tooltip = open ? 'URL入力を閉じる' : 'URL追加';
+  if (open) setTimeout(() => document.getElementById('url-input').focus(), 0);
+});
+
+
+document.getElementById('logo').addEventListener('click', checkAll);
+
+document.getElementById('check-single-btn').addEventListener('click', () => {
+  if (selectedIndex >= 0) checkSite(selectedIndex);
+});
+
+document.getElementById('delete-site-btn').addEventListener('click', () => {
+  if (selectedIndex >= 0) deleteSite(selectedIndex);
+});
+
+document.getElementById('mobile-detail-back-btn').addEventListener('click', closeMobileDetail);
+
+// ---- 画像モード ----
+document.getElementById('image-mode-btn').addEventListener('click', () => {
+  const main = document.getElementById('main');
+  const btn = document.getElementById('image-mode-btn');
+  if (viewMode === 'image') {
+    viewMode = 'list';
+    main.classList.remove('image-mode');
+    btn.classList.remove('active');
+  } else {
+    viewMode = 'image';
+    main.classList.remove('tile-mode');
+    main.classList.add('image-mode');
+    btn.classList.add('active');
+    document.getElementById('view-toggle-btn').classList.remove('active');
+    document.getElementById('tile-overlay').classList.remove('open');
+  }
+  try { localStorage.setItem('antenna-viewmode', viewMode); } catch {}
+  renderList();
+});
+
+// ---- ライトボックス ----
+document.getElementById('image-lightbox-close').addEventListener('click', closeLightbox);
+document.getElementById('image-lightbox').addEventListener('click', e => {
+  if (e.target === document.getElementById('image-lightbox')) closeLightbox();
+});
+document.getElementById('image-lightbox-prev').addEventListener('click', () => {
+  if (lightboxIndex > 0) { lightboxIndex--; updateLightbox(); }
+});
+document.getElementById('image-lightbox-next').addEventListener('click', () => {
+  if (lightboxIndex < lightboxImages.length - 1) { lightboxIndex++; updateLightbox(); }
+});
+
+document.getElementById('pin-filter-btn').addEventListener('click', () => {
+  pinFilter = !pinFilter;
+  document.getElementById('pin-filter-btn').classList.toggle('active', pinFilter);
+  renderList();
+});
+
+document.getElementById('view-toggle-btn').addEventListener('click', () => {
+  if (isMobileViewport()) return;
+  const wasImage = viewMode === 'image';
+  viewMode = (viewMode === 'tile') ? 'list' : 'tile';
+  const main = document.getElementById('main');
+  const btn = document.getElementById('view-toggle-btn');
+  main.classList.remove('image-mode');
+  document.getElementById('image-mode-btn').classList.remove('active');
+  main.classList.toggle('tile-mode', viewMode === 'tile');
+  btn.classList.toggle('active', viewMode === 'tile');
+  if (viewMode === 'list') {
+    document.getElementById('tile-overlay').classList.remove('open');
+    if (!wasImage) showDetail();
+  }
+  try { localStorage.setItem('antenna-viewmode', viewMode); } catch {}
+  renderList();
+});
+
+document.getElementById('expand-all-btn').addEventListener('click', () => {
+  const siteList = document.getElementById('site-list');
+  const btn = document.getElementById('expand-all-btn');
+  const expanding = !siteList.classList.contains('expand-all');
+  siteList.classList.toggle('expand-all', expanding);
+  btn.classList.toggle('active', expanding);
+});
+
+document.getElementById('detail-close-btn').addEventListener('click', () => {
+  document.getElementById('tile-overlay').classList.remove('open');
+  selectedIndex = -1;
+  renderList();
+});
+
+document.getElementById('tile-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('tile-overlay')) {
+    document.getElementById('tile-overlay').classList.remove('open');
+    selectedIndex = -1;
+    renderList();
+  }
+});
+
+document.getElementById('tile-overlay-pin-btn').addEventListener('click', () => {
+  const idx = parseInt(document.getElementById('tile-overlay-pin-btn').dataset.index);
+  if (idx >= 0) togglePin(idx);
+});
+
+document.getElementById('tile-overlay-check-btn').addEventListener('click', () => {
+  if (selectedIndex >= 0) {
+    checkSite(selectedIndex).then(() => showTileOverlay());
+  }
+});
+
+document.getElementById('export-btn').addEventListener('click', exportSites);
+document.getElementById('import-btn').addEventListener('click', () => document.getElementById('import-file').click());
+document.getElementById('import-file').addEventListener('change', e => {
+  if (e.target.files[0]) importSites(e.target.files[0]);
+  e.target.value = '';
+});
+
+// Settings modal
+document.getElementById('settings-btn').addEventListener('click', () => {
+  document.getElementById('custom-proxy-input').value = customProxyUrl;
+  document.getElementById('cloud-supabase-url-input').value = cloudConfig.url || '';
+  document.getElementById('cloud-supabase-key-input').value = cloudConfig.anonKey || '';
+  document.getElementById('cloud-profile-id-input').value = cloudConfig.profileId || DEFAULT_CLOUD_PROFILE_ID;
+  document.getElementById('settings-overlay').style.display = 'flex';
+});
+document.getElementById('settings-close-btn').addEventListener('click', () => {
+  document.getElementById('settings-overlay').style.display = 'none';
+});
+document.getElementById('settings-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('settings-overlay'))
+    document.getElementById('settings-overlay').style.display = 'none';
+});
+document.getElementById('settings-save-btn').addEventListener('click', () => {
+  customProxyUrl = document.getElementById('custom-proxy-input').value.trim();
+  try { localStorage.setItem('antenna-custom-proxy', customProxyUrl); } catch {}
+  saveCloudConfig({
+    url: document.getElementById('cloud-supabase-url-input').value,
+    anonKey: document.getElementById('cloud-supabase-key-input').value,
+    profileId: document.getElementById('cloud-profile-id-input').value,
+  });
+  if (hasCloudConfig()) queueCloudSync('settings');
+  document.getElementById('settings-overlay').style.display = 'none';
+  setStatus(customProxyUrl ? `カスタムプロキシを設定しました` : '設定を保存しました');
+});
+document.getElementById('cloud-sync-now-btn').addEventListener('click', async () => {
+  saveCloudConfig({
+    url: document.getElementById('cloud-supabase-url-input').value,
+    anonKey: document.getElementById('cloud-supabase-key-input').value,
+    profileId: document.getElementById('cloud-profile-id-input').value,
+  });
+  if (!hasCloudConfig()) {
+    showStatus('Cloud設定を入力してください', 5000, 'error');
+    return;
+  }
+  const btn = document.getElementById('cloud-sync-now-btn');
+  btn.disabled = true;
+  btn.textContent = '同期中...';
+  try {
+    await loadCloudState();
+    await pushCloudState('manual');
+  } catch (err) {
+    showStatus(`同期失敗: ${err.message}`, 9000, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '同期';
+  }
+});
+document.getElementById('settings-theme-toggle-btn').addEventListener('click', toggleTheme);
+
+// Keyboard shortcuts
+function isShortcutOverlayOpen() {
+  return document.getElementById('settings-overlay')?.style.display !== 'none'
+    || document.getElementById('tile-overlay')?.classList.contains('open')
+    || document.getElementById('image-lightbox')?.classList.contains('open')
+    || document.body.classList.contains('mobile-detail-open');
+}
+
+document.addEventListener('keydown', e => {
+  const ae = document.activeElement;
+  if (['INPUT', 'TEXTAREA'].includes(ae.tagName) || ae.isContentEditable) return;
+  const overlayOpen = isShortcutOverlayOpen();
+  if (overlayOpen && !['Escape', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return;
+  const sorted = visibleSites();
+  const currentSortedIdx = sorted.findIndex(s => sites.indexOf(s) === selectedIndex);
+
+  switch (e.key) {
+    case 'j': {
+      const nextIdx = Math.min(currentSortedIdx + 1, sorted.length - 1);
+      const next = sorted[nextIdx];
+      if (next) selectSite(sites.indexOf(next));
+      break;
+    }
+    case 'k': {
+      const prevIdx = Math.max(currentSortedIdx - 1, 0);
+      const prev = sorted[prevIdx];
+      if (prev) selectSite(sites.indexOf(prev));
+      break;
+    }
+    case 'o':
+      if (selectedIndex >= 0) window.open(sites[selectedIndex].url, '_blank', 'noopener');
+      break;
+    case 'r':
+      checkAll();
+      break;
+    case 't':
+      document.getElementById('view-toggle-btn').click();
+      break;
+    case 'p':
+      document.getElementById('pin-filter-btn').click();
+      break;
+    case 'e':
+      document.getElementById('expand-all-btn').click();
+      break;
+    case 'i':
+      document.getElementById('image-mode-btn').click();
+      break;
+    case 'Escape':
+      if (document.getElementById('image-lightbox').classList.contains('open')) {
+        closeLightbox();
+      } else if (document.body.classList.contains('mobile-detail-open')) {
+        closeMobileDetail();
+      }
+      break;
+    case 'ArrowLeft':
+      if (document.getElementById('image-lightbox').classList.contains('open')) {
+        document.getElementById('image-lightbox-prev').click();
+      }
+      break;
+    case 'ArrowRight':
+      if (document.getElementById('image-lightbox').classList.contains('open')) {
+        document.getElementById('image-lightbox-next').click();
+      }
+      break;
+  }
+});
+
+// diff-del 行クリックで全文展開 / 折りたたむ
+document.addEventListener('click', e => {
+  const delLine = e.target.closest('.diff-del:not(.has-inline), .diff-add:not(.has-inline)');
+  if (!delLine) return;
+  delLine.classList.toggle('expanded');
+});
+
+// Resizer
+(function () {
+  const resizer = document.getElementById('resizer');
+  const panel = document.getElementById('site-list-panel');
+  let startX, startWidth;
+  resizer.addEventListener('mousedown', e => {
+    startX = e.clientX;
+    startWidth = panel.offsetWidth;
+    resizer.classList.add('dragging');
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  });
+  function onMove(e) {
+    panel.style.width = Math.max(160, Math.min(560, startWidth + e.clientX - startX)) + 'px';
+  }
+  function onUp() {
+    resizer.classList.remove('dragging');
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+  }
+})();
+
+// ============================================================
+// Init
+// ============================================================
+(function () {
+  const saved = localStorage.getItem('antenna-viewmode');
+  if (saved === 'tile' && !isMobileViewport()) {
+    viewMode = 'tile';
+    document.getElementById('main').classList.add('tile-mode');
+    document.getElementById('view-toggle-btn').classList.add('active');
+  } else if (saved === 'image') {
+    viewMode = 'image';
+    document.getElementById('main').classList.add('image-mode');
+    document.getElementById('image-mode-btn').classList.add('active');
+  }
+})();
+updateCloudStatus();
+renderTagFilterBar();
+renderList();
+showDetail();
+if (hasCloudConfig()) {
+  loadCloudState();
+}
+
+window.addEventListener('resize', () => {
+  if (isMobileViewport() && viewMode === 'tile') {
+    viewMode = 'list';
+    document.getElementById('main').classList.remove('tile-mode');
+    document.getElementById('view-toggle-btn').classList.remove('active');
+    document.getElementById('tile-overlay').classList.remove('open');
+    renderList();
+  }
+  if (!isMobileViewport()) {
+    closeMobileDetail();
+  } else if (selectedIndex >= 0 && !document.body.classList.contains('mobile-detail-open')) {
+    showDetail();
+  }
+});
+</script>
+</body>
+</html>

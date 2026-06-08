@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Web Antenna の取扱説明書。更新監視、差分表示、タグ、ピン、画像モード、Supabase Cloud同期、スマホ表示、データ仕様、トラブル対応を説明します。">
+  <meta name="manual:app" content="Web Antenna">
+  <meta name="manual:updated" content="2026-06-01">
+  <meta name="manual:audience" content="human, ai">
+  <title>Web Antenna 取扱説明書</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f7fb;
+      --panel: #ffffff;
+      --panel-soft: #eef2f7;
+      --text: #172033;
+      --muted: #5f6b7a;
+      --border: #d8dee8;
+      --accent: #e94560;
+      --accent-2: #2f75b5;
+      --ok: #177245;
+      --warn: #b86b00;
+      --code-bg: #111827;
+      --code-text: #e5e7eb;
+      --shadow: 0 14px 32px rgba(23, 32, 51, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.75;
+      letter-spacing: 0;
+    }
+    a { color: var(--accent-2); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+      min-height: 100vh;
+    }
+    aside {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow: auto;
+      padding: 22px 18px;
+      border-right: 1px solid var(--border);
+      background: var(--panel);
+    }
+    .brand {
+      display: grid;
+      gap: 6px;
+      margin-bottom: 20px;
+    }
+    .brand strong {
+      color: var(--accent);
+      font-size: 1.05rem;
+      line-height: 1.3;
+    }
+    .brand span {
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+    nav ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 2px;
+    }
+    nav a {
+      display: block;
+      padding: 7px 9px;
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 0.9rem;
+    }
+    nav a:hover {
+      background: var(--panel-soft);
+      text-decoration: none;
+    }
+    main {
+      width: min(1120px, 100%);
+      padding: 34px clamp(18px, 4vw, 52px) 80px;
+    }
+    header.hero {
+      padding: 28px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+    .eyebrow {
+      color: var(--accent);
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    h1, h2, h3 {
+      line-height: 1.35;
+      letter-spacing: 0;
+    }
+    h1 {
+      margin: 6px 0 12px;
+      font-size: clamp(2rem, 4vw, 3.1rem);
+    }
+    h2 {
+      margin: 42px 0 14px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+      font-size: 1.55rem;
+    }
+    h3 {
+      margin: 28px 0 10px;
+      font-size: 1.12rem;
+    }
+    p { margin: 0 0 13px; }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 22px;
+    }
+    .summary div,
+    .card,
+    .callout,
+    details {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+    .summary div {
+      padding: 14px;
+    }
+    .summary b {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--text);
+    }
+    .summary span,
+    .muted { color: var(--muted); }
+    section { scroll-margin-top: 18px; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .card { padding: 16px; }
+    .card h3 { margin-top: 0; }
+    .callout {
+      margin: 16px 0;
+      padding: 14px 16px;
+      border-left: 4px solid var(--accent-2);
+    }
+    .callout.warn { border-left-color: var(--warn); }
+    .callout.ok { border-left-color: var(--ok); }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0 22px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    th, td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background: var(--panel-soft);
+      font-weight: 700;
+    }
+    tr:last-child td { border-bottom: none; }
+    code, kbd {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.92em;
+    }
+    code {
+      padding: 0.12em 0.35em;
+      border-radius: 4px;
+      background: var(--panel-soft);
+    }
+    pre {
+      overflow: auto;
+      padding: 14px;
+      border-radius: 8px;
+      background: var(--code-bg);
+      color: var(--code-text);
+    }
+    pre code {
+      padding: 0;
+      background: transparent;
+      color: inherit;
+    }
+    kbd {
+      display: inline-block;
+      min-width: 1.7em;
+      padding: 0.05em 0.45em;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: var(--panel-soft);
+      text-align: center;
+    }
+    details { margin: 14px 0; padding: 0; }
+    summary {
+      cursor: pointer;
+      padding: 12px 14px;
+      font-weight: 700;
+    }
+    details > div {
+      padding: 0 14px 14px;
+    }
+    .ai-summary {
+      margin-top: 32px;
+      padding: 18px;
+      border: 1px dashed var(--border);
+      border-radius: 8px;
+      background: #fbfcfe;
+    }
+    .screen {
+      margin: 16px 0;
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--panel-soft);
+      white-space: pre-wrap;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.86rem;
+      line-height: 1.55;
+      overflow: auto;
+    }
+    @media (max-width: 860px) {
+      .layout { display: block; }
+      aside {
+        position: relative;
+        height: auto;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+      }
+      nav ul {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      main { padding: 24px 16px 60px; }
+      .summary, .grid { grid-template-columns: 1fr; }
+      header.hero { padding: 20px; }
+      table { font-size: 0.92rem; }
+    }
+  </style>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "Web Antenna 取扱説明書",
+    "dateModified": "2026-06-01",
+    "inLanguage": "ja",
+    "about": ["Webページ更新監視", "Supabase Cloud同期", "スマホ表示", "差分表示"]
+  }
+  </script>
+</head>
+<body>
+  <div class="layout">
+    <aside>
+      <div class="brand">
+        <strong>Web Antenna</strong>
+        <span>更新監視・Cloud同期・スマホ操作</span>
+      </div>
+      <nav aria-label="目次">
+        <ul>
+          <li><a href="#overview">概要</a></li>
+          <li><a href="#quick-start">最短セットアップ</a></li>
+          <li><a href="#screen">画面構成</a></li>
+          <li><a href="#monitor">更新確認</a></li>
+          <li><a href="#diff">差分表示</a></li>
+          <li><a href="#settings">監視設定</a></li>
+          <li><a href="#tags-pins">タグ・ピン</a></li>
+          <li><a href="#views">タイル・画像</a></li>
+          <li><a href="#cloud">Cloud同期</a></li>
+          <li><a href="#mobile">スマホ操作</a></li>
+          <li><a href="#backup">import/export</a></li>
+          <li><a href="#data">データ仕様</a></li>
+          <li><a href="#trouble">トラブル対応</a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <main>
+      <header class="hero" id="overview">
+        <div class="eyebrow">Manual</div>
+        <h1>Web Antenna 取扱説明書</h1>
+        <p>Web Antenna は、RSSがないWebサイトも含めてページ更新を監視する、ブラウザだけで動く更新確認ツールです。登録サイトを確認し、前回取得内容との差分、タグ、ピン、画像一覧、Cloud同期を使って更新チェックを整理できます。</p>
+        <div class="summary">
+          <div><b>起動</b><span><code>antenna.html</code> をブラウザで開くだけで使えます。</span></div>
+          <div><b>保存</b><span>標準は localStorage。設定すると Supabase に同期します。</span></div>
+          <div><b>スマホ</b><span>一覧と詳細を切り替える表示。import/export とタイル表示は非表示です。</span></div>
+        </div>
+      </header>
+
+      <section id="quick-start">
+        <h2>最短セットアップ</h2>
+        <ol>
+          <li><code>output/antenna/antenna.html</code> をブラウザで開きます。</li>
+          <li>ヘッダーのURL欄に監視したいWebサイトを入力し、<b>add</b> を押します。<code>https://</code> は省略できます。</li>
+          <li>追加直後に初回確認が始まり、ページ内容のベースラインが保存されます。</li>
+          <li>以後は <b>Web Antenna ⟳</b> ロゴ、または <kbd>r</kbd> で全サイトをまとめて確認します。</li>
+        </ol>
+        <div class="callout ok">Cloud同期を使う場合は、先に <code>supabase-schema.sql</code> をSupabase SQL Editorで実行してから、設定画面にSupabase URL / anon key / 共有IDを入力します。</div>
+      </section>
+
+      <section id="screen">
+        <h2>画面構成</h2>
+        <div class="screen">Web Antenna ⟳  [URL入力欄][add]  export  import  sync/local  ⚙
+監視サイト  N件  ⊟  📍  ⊞  🖼
+[すべて] [仕事] [技術] ...（タグがある場合）
+
+[fav] サイト名 ↗︎   最終確認  📍  ⟳  ✕
+      example.com · 最終更新
+      #タグ
+      展開時: 差分、タグ入力、監視設定
+
+j 次 / k 前 / o 開く / r 全確認 / t タイル / i 画像 / p ピン / e 全展開</div>
+        <table>
+          <thead><tr><th>場所</th><th>役割</th></tr></thead>
+          <tbody>
+            <tr><td>ヘッダー</td><td>URL追加、全確認、import/export、Cloud状態、設定を操作します。</td></tr>
+            <tr><td>一覧</td><td>登録サイトを最終更新順に表示します。未更新サイトは登録順で末尾に並びます。</td></tr>
+            <tr><td>行の操作</td><td>ピン、個別確認、削除、サイトを開く操作を行います。</td></tr>
+            <tr><td>詳細/展開</td><td>差分、タグ、監視範囲、除外ルールを確認・編集します。</td></tr>
+            <tr><td>設定</td><td>表示テーマ、カスタムCORSプロキシ、Cloud同期設定を管理します。</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="monitor">
+        <h2>更新確認</h2>
+        <div class="grid">
+          <div class="card">
+            <h3>全サイトを確認</h3>
+            <p>ヘッダー左上の <b>Web Antenna ⟳</b> ロゴ、または <kbd>r</kbd> を押します。最大3件を並列で確認しながら順次処理します。</p>
+          </div>
+          <div class="card">
+            <h3>1件だけ確認</h3>
+            <p>各行の <b>⟳</b>、または詳細画面の確認ボタンを押します。対象サイトだけを再取得します。</p>
+          </div>
+        </div>
+        <table>
+          <thead><tr><th>表示</th><th>意味</th></tr></thead>
+          <tbody>
+            <tr><td>未確認</td><td>まだ一度も確認していません。</td></tr>
+            <tr><td>⟳ スピナー</td><td>確認処理中です。</td></tr>
+            <tr><td>エラー</td><td>取得に失敗しました。詳細にエラー理由が表示されます。</td></tr>
+            <tr><td>バッジなし</td><td>確認済みで、現在は変更なしです。</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="diff">
+        <h2>差分表示</h2>
+        <p>Web Antenna は取得したページ本文を前回内容と比較し、変化があった場合に差分スニペットを残します。既読にしても次回「変化なし」と確認されるまでは前回差分を参照できます。</p>
+        <table>
+          <thead><tr><th>表示</th><th>意味</th></tr></thead>
+          <tbody>
+            <tr><td>緑の <code>+</code></td><td>今回新たに追加された行です。</td></tr>
+            <tr><td>赤の <code>−</code></td><td>前回から削除された行です。</td></tr>
+            <tr><td>グレー</td><td>前後の文脈行です。</td></tr>
+            <tr><td><code>· · ·</code></td><td>変化のない行を省略しています。</td></tr>
+          </tbody>
+        </table>
+        <p><b>インライン差分:</b> 追加行と削除行がペアになる場合、変更された文字だけをさらに強調します。長い行はクリックで全文表示 / 折りたたみできます。</p>
+      </section>
+
+      <section id="settings">
+        <h2>監視設定</h2>
+        <p>サイトごとに「監視設定」を開くと、ページ全体ではなく特定範囲だけを監視したり、広告・日時・カウンターなどのノイズを除外できます。</p>
+        <table>
+          <thead><tr><th>項目</th><th>内容</th><th>例</th></tr></thead>
+          <tbody>
+            <tr><td>監視範囲</td><td>CSSセレクタで監視対象を絞ります。空欄ならページ全体です。</td><td><code>main</code>, <code>article</code>, <code>#content</code></td></tr>
+            <tr><td>除外要素</td><td>監視範囲内から無視するHTML要素を除去します。</td><td><code>.ad, time, .sidebar</code></td></tr>
+            <tr><td>除外文字</td><td>正規表現で変化ノイズを削除します。</td><td><code>閲覧数:\s*\d+</code></td></tr>
+            <tr><td>テスト</td><td>現在の設定で取得される先頭テキストを確認します。</td><td>設定変更前の確認に使います。</td></tr>
+          </tbody>
+        </table>
+        <div class="callout warn">監視範囲や除外ルールを変更すると、そのサイトのベースラインはリセットされます。次回確認で新しい基準を取得します。</div>
+      </section>
+
+      <section id="tags-pins">
+        <h2>タグ・ピン</h2>
+        <h3>タグ</h3>
+        <p>行を展開し、タグ欄にカンマ区切りで入力します。タグが1件以上あるとタグフィルターバーが表示され、タグボタンや行のタグピルから絞り込めます。</p>
+        <h3>ピン</h3>
+        <p>後で確認したいサイトは <b>📍</b> でピン留めできます。一覧ヘッダーの <b>📍</b> または <kbd>p</kbd> でピン済みサイトだけを表示します。</p>
+      </section>
+
+      <section id="views">
+        <h2>タイル表示・画像モード</h2>
+        <div class="grid">
+          <div class="card">
+            <h3>タイル表示</h3>
+            <p><b>⊞</b> または <kbd>t</kbd> で切り替えます。カード形式で監視サイトを見渡し、クリックすると詳細オーバーレイを開きます。スマホ表示ではタイルボタンは表示されません。</p>
+          </div>
+          <div class="card">
+            <h3>画像モード</h3>
+            <p><b>🖼</b> または <kbd>i</kbd> で切り替えます。各ページの <code>og:image</code> と本文内画像を抽出し、サイトごとにグリッド表示します。</p>
+          </div>
+        </div>
+        <p>画像モードでは、画像クリックでライトボックスを開き、同じサイトの前後画像へ移動できます。監視範囲が設定されている場合は、その範囲内の画像を優先して収集します。</p>
+      </section>
+
+      <section id="cloud">
+        <h2>Cloud同期</h2>
+        <p>Supabaseを使うと、複数端末で同じ監視サイト一覧と確認結果を共有できます。Cloud設定がない場合は従来どおり localStorage だけで動作します。</p>
+        <h3>初回設定</h3>
+        <ol>
+          <li>Supabase SQL Editorで <code>output/antenna/supabase-schema.sql</code> を実行します。</li>
+          <li>Web Antenna の <b>⚙</b> を開きます。</li>
+          <li><b>Cloud設定</b> に <code>Supabase URL</code>、<code>anon key</code>、<code>共有ID</code> を入力します。</li>
+          <li><b>保存</b> または <b>同期</b> を押します。</li>
+        </ol>
+        <h3>同期される内容</h3>
+        <ul>
+          <li>URL、サイト名、タグ、ピン状態</li>
+          <li>監視範囲、除外要素、除外文字</li>
+          <li>最終確認日時、最終更新日時、前回取得テキスト、差分、ステータス、エラー</li>
+        </ul>
+        <h3>同期方式</h3>
+        <p>サイト追加、削除、確認、タグ変更、ピン変更、監視設定変更の後に自動同期します。保存時は先に現在行を upsert し、成功後に不要行だけ削除するため、通信失敗でCloud側が空になりにくい方式です。</p>
+        <div class="callout warn">複数端末で同時編集した場合は、URLごとに <code>updated_at</code> が新しいデータを優先します。古い端末で大きく編集する前に、まず手動同期してください。</div>
+      </section>
+
+      <section id="mobile">
+        <h2>スマホ操作</h2>
+        <p>スマホ幅では、一覧と詳細を切り替える表示になります。PC向けの import/export とタイル表示ボタンは表示されません。</p>
+        <table>
+          <thead><tr><th>操作</th><th>動作</th></tr></thead>
+          <tbody>
+            <tr><td>URLボタン</td><td>URL入力欄を開閉します。入力欄はボタンを押した時だけ表示されます。</td></tr>
+            <tr><td>サイト行をタップ</td><td>詳細画面を全画面風に開きます。</td></tr>
+            <tr><td>← / Esc</td><td>詳細画面から一覧へ戻ります。</td></tr>
+            <tr><td>⚙ 設定</td><td>表示テーマ、CORSプロキシ、Cloud設定を操作します。</td></tr>
+            <tr><td>表示テーマ</td><td>設定画面からライト / ダークを切り替えます。</td></tr>
+          </tbody>
+        </table>
+        <h3>ホーム画面に追加</h3>
+        <p><code>manifest.webmanifest</code> と <code>apple-touch-icon.png</code> を参照しているため、対応ブラウザではホーム画面に追加した時に専用アイコンが表示されます。アイコンはA型アンテナ塔と電波アークを組み合わせたシンプルなデザインです。</p>
+      </section>
+
+      <section id="backup">
+        <h2>import/export</h2>
+        <p>PC表示では、ヘッダーの <b>export</b> で登録サイト一覧を <code>antenna-sites.json</code> として書き出し、<b>import</b> で復元できます。スマホ表示ではボタンを表示しません。</p>
+        <table>
+          <thead><tr><th>項目</th><th>内容</th></tr></thead>
+          <tbody>
+            <tr><td>export</td><td>URL、ラベル、監視設定、タグ、ピン状態を書き出します。</td></tr>
+            <tr><td>import</td><td>既存リストに追加します。同じURLは重複登録しません。</td></tr>
+            <tr><td>Cloudとの関係</td><td>Cloud設定中にimportすると、追加分も通常保存後に同期されます。</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="data">
+        <h2>データ仕様</h2>
+        <table>
+          <thead><tr><th>保存先</th><th>キー / テーブル</th><th>内容</th></tr></thead>
+          <tbody>
+            <tr><td>localStorage</td><td><code>antenna-sites</code></td><td>監視サイト、確認結果、差分、タグ、ピン、監視設定。</td></tr>
+            <tr><td>localStorage</td><td><code>antenna-theme</code></td><td>ライト / ダークテーマ。</td></tr>
+            <tr><td>localStorage</td><td><code>antenna-custom-proxy</code></td><td>任意のCORSプロキシURL。</td></tr>
+            <tr><td>localStorage</td><td><code>antenna-cloud-config</code></td><td>Supabase URL、anon key、共有ID。</td></tr>
+            <tr><td>Supabase</td><td><code>antenna_sites</code></td><td>共有IDごとの監視サイトと確認結果。</td></tr>
+          </tbody>
+        </table>
+        <p>Cloudテーブルの主キーは <code>(profile_id, url)</code> です。共有IDごとにデータを分離します。</p>
+      </section>
+
+      <section id="trouble">
+        <h2>トラブル対応</h2>
+        <details>
+          <summary>サイト取得に失敗する</summary>
+          <div>公開CORSプロキシの制限、対象サイトのブロック、ネットワークエラーが考えられます。時間を置いて再確認するか、設定からカスタムCORSプロキシを指定してください。</div>
+        </details>
+        <details>
+          <summary>関係ない小さな変化を拾う</summary>
+          <div>監視範囲を <code>main</code> や <code>article</code> に絞り、広告・日時・カウンターを除外要素または除外文字で外してください。</div>
+        </details>
+        <details>
+          <summary>Cloud同期に失敗する</summary>
+          <div>Supabase URL、anon key、共有ID、SQLスキーマ、RLSポリシーを確認してください。ブラウザのステータスバーにHTTPエラーやテーブル名が表示される場合があります。</div>
+        </details>
+        <details>
+          <summary>スマホでタイル表示が出ない</summary>
+          <div>仕様です。スマホ表示ではタイルボタンを非表示にし、リストと詳細画面の切り替えに絞っています。</div>
+        </details>
+        <details>
+          <summary>データが消えたように見える</summary>
+          <div>タグフィルタ、ピンフィルタ、共有ID違いを確認してください。localStorageを削除した場合は、Cloud設定後に同期するか、PC表示のimportでバックアップJSONを読み込んでください。</div>
+        </details>
+      </section>
+
+      <section class="ai-summary" aria-label="AI向け構造化サマリー">
+        <h2>AI向け構造化サマリー</h2>
+        <ul>
+          <li>App: Web Antenna</li>
+          <li>Primary file: <code>output/antenna/antenna.html</code></li>
+          <li>Manual file: <code>output/antenna/antenna-取扱説明書.html</code></li>
+          <li>Cloud schema: <code>output/antenna/supabase-schema.sql</code></li>
+          <li>Storage: localStorage by default, Supabase REST API when configured</li>
+          <li>Mobile policy: hide import/export/tile mode; use URL toggle and full-screen detail view</li>
+          <li>Key operations: add URL, check all, check one, edit monitor rules, tags, pins, image mode, Cloud sync</li>
+        </ul>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
