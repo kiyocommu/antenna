@@ -1,12 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Web Antenna icon">
   <rect width="512" height="512" rx="96" fill="#64779f"/>
-  <g fill="none" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M158 406 256 140 354 406" stroke-width="44"/>
-    <path d="M208 286h96" stroke-width="38"/>
-    <path d="M256 92v92" stroke-width="30"/>
-    <path d="M208 108c-28 18-45 49-45 84" stroke-width="22"/>
-    <path d="M304 108c28 18 45 49 45 84" stroke-width="22"/>
-    <path d="M166 74c-43 31-70 82-70 138" stroke-width="18"/>
-    <path d="M346 74c43 31 70 82 70 138" stroke-width="18"/>
-  </g>
+  <!-- Letter A as antenna tower -->
+  <path d="M256 160l-90 250h36l18-52h72l18 52h36z" fill="#ffffff"/>
+  <!-- A crossbar (cut out) -->
+  <rect x="218" y="306" width="76" height="28" rx="4" fill="#64779f"/>
+  <!-- Antenna tip -->
+  <circle cx="256" cy="148" r="18" fill="#ffffff"/>
+  <!-- Signal wave inner -->
+  <path d="M200 120a80 80 0 0 1 112 0" fill="none" stroke="#ffffff" stroke-width="20" stroke-linecap="round"/>
+  <!-- Signal wave outer -->
+  <path d="M158 88a140 140 0 0 1 196 0" fill="none" stroke="#ffffff" stroke-width="16" stroke-linecap="round" opacity="0.55"/>
 </svg>
