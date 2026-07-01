@@ -856,7 +856,7 @@ body.light .diff-omit { color: #a0a8c0; }
   color: #7a8ba0;
   flex-shrink: 0;
   height: 22px;
-  display: flex;
+  display: none;
   align-items: center;
 }
 #status {
@@ -3183,7 +3183,9 @@ async function loadCloudState() {
 // Utilities
 // ============================================================
 function setStatus(msg) {
-  document.getElementById('statusbar').textContent = msg;
+  const el = document.getElementById('statusbar');
+  el.textContent = msg;
+  el.style.display = msg ? 'flex' : 'none';
 }
 
 function showStatus(msg, duration = 5000, type = '') {
